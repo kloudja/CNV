@@ -335,7 +335,7 @@ public class LoadBalancerWorker extends Thread {
 //			String url = "http://54.200.250.35:8000/factorizacao.html?n="+numberToFactorize.toString();
 			
 			URL obj = new URL(url);
-			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+			HttpURLConnection con = (HttpURLConnection) obj.openConnection();// Envia o pedido
 			System.out.println("[LOAD BALANCER WORKER] ENVIEI O PEDIDO PARA FATORIZAR PARA O URL: [ " + url + "]");
 			// optional default is GET
 			con.setRequestMethod("GET");
@@ -352,11 +352,16 @@ public class LoadBalancerWorker extends Thread {
 			String inputLine;
 			StringBuffer response = new StringBuffer();
 
+			// Recebe a resposta oa pedido
 			while ((inputLine = in.readLine()) != null) {
 				System.out.println("[LOAD BALANCER WORKER] Recebi este resultado: " + inputLine);
 				response.append(inputLine);
 			}
 			in.close();
+			
+			// Atualizar o custo atual na instancia
+			int cost = checkMetricInDB(numberToFactorize);
+			instancesInformation.deleteCostFromInstance(instance,cost);
 
 			stringArray = response.toString();
 

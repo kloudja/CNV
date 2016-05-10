@@ -1,3 +1,4 @@
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -57,6 +58,15 @@ public class InstancesInformation {
 		for (Object e : a) {
 			instance_cost.put(((Map.Entry<Instance, Integer>) e).getKey(), ((Map.Entry<Instance, Integer>) e).getValue());
 		}
+	}
+
+
+	public synchronized void deleteCostFromInstance(Instance instance, int cost) {
+		
+		int notUpdatedCost = instance_cost.get(instance);
+		int actualCost = notUpdatedCost - cost;
+		instance_cost.put(instance, actualCost);
+		
 	}
 	
 }

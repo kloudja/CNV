@@ -100,7 +100,7 @@ public class InstanceTools {
 		Instance instance = runInstancesResult.getReservation().getInstances().get(0);
 
 		instancesInformation.addInstance_cost(instance, 0); //Adiciona instancia à InstanceInformation!!
-
+		
 		return instance;
 	}
 

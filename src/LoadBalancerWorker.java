@@ -210,16 +210,6 @@ public class LoadBalancerWorker extends Thread {
 			TableDescription tableDescription = dynamoDB.describeTable(describeTableRequest).getTable();
 			//System.out.println("Table Description: " + tableDescription);
 
-
-			/*
-			// Add an item
-			//System.out.println("==================================================================================================");
-			Map<String, AttributeValue> item = newItem(numberToFactorize, sopaMagica(numberToFactorize));
-			PutItemRequest putItemRequest = new PutItemRequest(tableName, item);
-			PutItemResult putItemResult = dynamoDB.putItem(putItemRequest);
-			//System.out.println("Result: " + putItemResult);
-			 */
-
 			// Scan items 
 			HashMap<String, Condition> scanFilter = new HashMap<String, Condition>();
 			Condition condition = new Condition()
@@ -256,7 +246,10 @@ public class LoadBalancerWorker extends Thread {
 	 */
 	private int sopaMagica(BigInteger numberToFactorize) {
 
-		return 0;
+		//Ir buscar valores superiores e inferiores
+		
+		
+		return 10000000;
 	}
 
 	/**
@@ -277,8 +270,8 @@ public class LoadBalancerWorker extends Thread {
 		 * => Se o (custo atual da instancia + novo custo) < 1500 escolhe-se essa instancia
 		 * => Caso contrario, cria-se uma e escolhe-se essa instancia
 		 */
-		Instance firstInstanceOfHashMap = (Instance) instancesInformation.getInstance_cost().keySet().toArray()[0];
-		int costOfFirstInstanceOfHashMap = instancesInformation.getInstance_cost().get(firstInstanceOfHashMap);
+		Instance firstInstanceOfHashMap = (Instance) instancesInformation.getInstance_TimeCost().keySet().toArray()[0];
+		int costOfFirstInstanceOfHashMap = instancesInformation.getInstance_TimeCost().get(firstInstanceOfHashMap).getCost();
 
 		if((costOfFirstInstanceOfHashMap + cost) < MAX_COST ){
 
@@ -314,6 +307,7 @@ public class LoadBalancerWorker extends Thread {
 			
 			URL obj = new URL(url);
 			HttpURLConnection con = (HttpURLConnection) obj.openConnection();// Envia o pedido
+			
 			System.out.println("[LOAD BALANCER WORKER] ENVIEI O PEDIDO PARA FATORIZAR PARA O URL: [ " + url + "]");
 			// optional default is GET
 			con.setRequestMethod("GET");
@@ -373,6 +367,7 @@ public class LoadBalancerWorker extends Thread {
 			} catch (IndexOutOfBoundsException e1) {
 				// Faz a sopa mágica
 				cost = sopaMagica(numberToFactorize); //Algoritmo nº1
+				
 			}	catch (Exception e) {
 				System.out.println(e);
 			}

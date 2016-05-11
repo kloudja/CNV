@@ -2,6 +2,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -10,26 +11,43 @@ import com.amazonaws.services.ecs.model.KeyValuePair;
 
 public class InstancesInformation {
 
-	private HashMap<Instance, Integer> instance_cost;
+	private LinkedHashMap<Instance, TimeCost> instance_TimeCost;
+	private LinkedHashMap<Instance, Long> instance_startTime;
 
 	public InstancesInformation() {
 		super();
-		instance_cost = new HashMap<>();
+		instance_TimeCost = new LinkedHashMap<>();
+		instance_startTime = new LinkedHashMap<>();
 	}
-
 
 	public synchronized void addInstance_cost(Instance instance, int cost){
-		instance_cost.put(instance, cost);
+
+		if(instance_TimeCost.containsKey(instance)){
+			TimeCost timeCost = instance_TimeCost.get(instance);
+			int notUpdatedCost = timeCost.getCost();
+
+			int actualCost = notUpdatedCost + cost;
+			instance_TimeCost.put(instance, new TimeCost(System.currentTimeMillis(), actualCost));
+		}
+		else {
+			instance_TimeCost.put(instance, new TimeCost(System.currentTimeMillis(), cost));
+		}
+	}
+	
+	public LinkedHashMap<Instance, TimeCost> getInstance_TimeCost() {
+		return instance_TimeCost;
 	}
 
-
-	public HashMap<Instance, Integer> getInstance_cost() {
-		return instance_cost;
+	public void setInstance_TimeCost(LinkedHashMap<Instance, TimeCost> instance_TimeCost) {
+		this.instance_TimeCost = instance_TimeCost;
 	}
 
+	public LinkedHashMap<Instance, Long> getInstance_startTime() {
+		return instance_startTime;
+	}
 
-	public synchronized void setInstance_cost(HashMap<Instance, Integer> instance_cost) {
-		this.instance_cost = instance_cost;
+	public void setInstance_startTime(LinkedHashMap<Instance, Long> instance_startTime) {
+		this.instance_startTime = instance_startTime;
 	}
 
 	/**
@@ -37,36 +55,47 @@ public class InstancesInformation {
 	 */
 	public synchronized void sortInstancesByCost() {
 
-		/*HashMap<String, Integer> map = new HashMap<String, Integer>();
-		    map.put("a", 4);
-		    map.put("c", 6);
-		    map.put("b", 2);*/
+//		Instance a = new Instance();
+//		a.setInstanceId("A");
+//		Instance b = new Instance();
+//		b.setInstanceId("B");
+//		Instance c = new Instance();
+//		c.setInstanceId("C");
+//		
+//		HashMap<Instance, TimeCost> map = new LinkedHashMap<Instance, TimeCost>();
+//		map.put(a, new TimeCost(10, 5));	
+//		map.put(c, new TimeCost(10, 6));
+//		map.put(b, new TimeCost(10, 2));
+
 
 		// Ordena-se
-		Object[] a = instance_cost.entrySet().toArray();
+		Object[] objectArray = instance_TimeCost.entrySet().toArray();
 
-		Arrays.sort(a, new Comparator() {
+		Arrays.sort(objectArray, new Comparator() {
 			public int compare(Object o1, Object o2) {
-				return ((Map.Entry<Instance, Integer>) o2).getValue().compareTo(
-						((Map.Entry<Instance, Integer>) o1).getValue());
+				return ((Integer)((Map.Entry<Instance, TimeCost>) o1).getValue().getCost()).compareTo(
+						(Integer)((Map.Entry<Instance, TimeCost>) o2).getValue().getCost());
 			}
 		});
 
 		//Limpa-se o hash map desordenado e colocamos tudo novamente, mas ordenado!
-		instance_cost.clear();
+		instance_TimeCost.clear();
 
-		for (Object e : a) {
-			instance_cost.put(((Map.Entry<Instance, Integer>) e).getKey(), ((Map.Entry<Instance, Integer>) e).getValue());
+		for (Object e : objectArray) {
+			instance_TimeCost.put(((Map.Entry<Instance, TimeCost>) e).getKey(), ((Map.Entry<Instance, TimeCost>) e).getValue());
 		}
 	}
 
 
 	public synchronized void deleteCostFromInstance(Instance instance, int cost) {
-		
-		int notUpdatedCost = instance_cost.get(instance);
-		int actualCost = notUpdatedCost - cost;
-		instance_cost.put(instance, actualCost);
-		
+
+		if(instance_TimeCost.containsKey(instance)){
+			TimeCost timeCost = instance_TimeCost.get(instance);
+			int notUpdatedCost = timeCost.getCost();
+
+			int actualCost = notUpdatedCost - cost;
+			instance_TimeCost.put(instance, new TimeCost(System.currentTimeMillis(), actualCost));
+		}
+
 	}
-	
 }

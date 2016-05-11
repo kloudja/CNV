@@ -1,3 +1,4 @@
+/AutoScaler.class
 /InstanceTools.class
 /InstancesInformation$1.class
 /InstancesInformation.class
@@ -8,4 +9,5 @@
 /WebServer.class
 /Worker.class
 /WorkersGroup.class
-/AutoScaler.class
+/InstancesInformation$TimeCost.class
+/TimeCost.class

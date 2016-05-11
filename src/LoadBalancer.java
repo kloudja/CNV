@@ -24,13 +24,14 @@ public class LoadBalancer implements HttpHandler {
 		instanceTools.prepareSystem();
 		
 		//TODO Criar Auto-Scaler
+		new AutoScaler(instancesInformation).start();
+		
 	}
 
 	public void handle(HttpExchange httpExchange) throws IOException {
 
 		//Todos os workers mexem na mesma classe que possui informação sobre as instancias do sistema
 		LoadBalancerWorker loadBalancerWorker = new LoadBalancerWorker(httpExchange, instancesInformation); 
-		
 		loadBalancerWorker.start();
 	}
 }

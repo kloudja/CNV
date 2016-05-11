@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
@@ -11,9 +12,13 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
+import com.amazonaws.services.ec2.model.StopInstancesRequest;
+import com.amazonaws.services.ec2.model.StopInstancesResult;
+import com.amazonaws.services.opsworks.model.StopInstanceRequest;
 
 public class InstanceTools {
 	AmazonEC2 ec2;
@@ -118,5 +123,17 @@ public class InstanceTools {
 		}
 		System.out.println("De momento há [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");
 	}
+
+
+	public void stopInstance(Instance instance) throws AmazonServiceException, AmazonClientException, InterruptedException
+    {
+		final String instanceId = instance.getInstanceId();
+		final Boolean forceStop = true;
+        // Stop the instance
+        StopInstancesRequest stopRequest = new StopInstancesRequest().withInstanceIds(instanceId).withForce(forceStop);
+        StopInstancesResult startResult = ec2.stopInstances(stopRequest);
+        
+
+    }
 
 }

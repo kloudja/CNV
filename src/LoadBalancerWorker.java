@@ -229,26 +229,6 @@ public class LoadBalancerWorker extends Thread {
 			ScanRequest scanRequest = new ScanRequest(tableName).withScanFilter(scanFilter);
 			ScanResult scanResult = dynamoDB.scan(scanRequest);
 
-			/*
-			System.out.println("==================================================================================================");
-			System.out.println("Result: " + scanResult);
-
-			System.out.println("==================================================================================================");
-			System.out.println(scanResult.getItems());
-			System.out.println("==================================================================================================");
-
-			System.out.println(scanResult.getItems().get(0));
-			System.out.println("==================================================================================================");
-
-			System.out.println(scanResult.getItems().get(0).get("cost"));
-			System.out.println("==================================================================================================");
-
-			System.out.println(scanResult.getItems().get(0).get("cost").getN());
-			System.out.println("==================================================================================================");
-
-			System.out.println(scanResult.getItems().get(0).get("cost").getS());
-			 */
-
 			cost = Integer.parseInt(scanResult.getItems().get(0).get("cost").getN());
 
 		} catch (AmazonServiceException ase) {
@@ -271,14 +251,12 @@ public class LoadBalancerWorker extends Thread {
 
 	/**
 	 *  Algoritmo nº1 para supor um custo para um numero caso não exista o custo desse numero na base de dados.
-	 * @param numberToFactorize numero a fatorizaar
+	 * @param numberToFactorize numero a fatorizar
 	 * @return
 	 */
 	private int sopaMagica(BigInteger numberToFactorize) {
 
-		Random r = new Random();
-
-		return r.nextInt(1000);
+		return 0;
 	}
 
 	/**
@@ -286,8 +264,8 @@ public class LoadBalancerWorker extends Thread {
 	 * Com base no custo previamente calculado, calcula para que instância enviar o pedido.
 	 * Se necessário, cria uma instância nova.
 	 * 
-	 * @param cost
-	 * @return
+	 * @param cost.
+	 * @return Instance.
 	 */
 	private Instance calculateInstance(int cost) {
 
@@ -381,7 +359,6 @@ public class LoadBalancerWorker extends Thread {
 			System.out.println("=========================================================");
 
 			StringBuilder response = new StringBuilder();
-
 
 			//Extrai o numero do URL
 			BigInteger numberToFactorize = getNumberFromURL(httpExchange, response);

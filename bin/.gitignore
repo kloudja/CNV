@@ -6,8 +6,7 @@
 /LoadBalancer.class
 /LoadBalancerWorker.class
 /Testes.class
+/TimeCost.class
 /WebServer.class
 /Worker.class
 /WorkersGroup.class
-/InstancesInformation$TimeCost.class
-/TimeCost.class

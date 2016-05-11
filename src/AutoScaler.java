@@ -41,11 +41,11 @@ public class AutoScaler extends Thread{
 		for (Entry<Instance, TimeCost> entry : tmpInstance_TimeCost.entrySet()) {
 			int entryCost = entry.getValue().getCost();
 			long entryCostTime= entry.getValue().getTime();
-			long instanteStartTime = tmpInstance_startTime.get(entry.getKey());
+			long instanteStartTime = tmpInstance_startTime.get(entry.getKey()); //breka-se aqui todo
 			long currentTime = System.currentTimeMillis();
 			long dezMinutos = 1000*60*10;
 			long pertDumaHora = 1000*60*50;
-			// Se a instancia nao tiver custo nenhum, estiver há 10 minutos sem fazer nada e tiver sido iniciada há 50 minutos
+			// Se a instancia nao tiver custo nenhum, estiver hï¿½ 10 minutos sem fazer nada e tiver sido iniciada hï¿½ 50 minutos
 			if(entryCost==0 && ((entryCostTime - currentTime) >= dezMinutos) && ((instanteStartTime - currentTime) >= pertDumaHora)){
 				instanceTools.stopInstance(entry.getKey());
 			}

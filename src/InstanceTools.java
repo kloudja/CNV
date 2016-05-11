@@ -1,4 +1,4 @@
-import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,14 +18,14 @@ import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesResult;
+import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.amazonaws.services.opsworks.model.StopInstanceRequest;
 
 public class InstanceTools {
 	AmazonEC2 ec2;
 	AmazonCloudWatchClient cloudWatch;
 	private InstancesInformation instancesInformation;
-
-
 
 	public InstanceTools(InstancesInformation instancesInformation) {
 		this.instancesInformation = instancesInformation;
@@ -83,7 +83,7 @@ public class InstanceTools {
 	}
 
 
-	public Instance createWorkersGroupInstance(){		
+	public synchronized Instance createWorkersGroupInstance(){		
 
 		RunInstancesRequest runInstancesRequest =
 				new RunInstancesRequest();
@@ -99,8 +99,9 @@ public class InstanceTools {
 
 		Instance instance = runInstancesResult.getReservation().getInstances().get(0);
 
-		instancesInformation.addInstance_cost(instance, 0); //Adiciona instancia à InstanceInformation!!
-		
+		instancesInformation.addInstance_cost(instance, 0); //Adiciona instancia a� InstanceInformation!!
+		instancesInformation.addInstance_startTime(instance, System.currentTimeMillis());
+
 		return instance;
 	}
 
@@ -109,31 +110,34 @@ public class InstanceTools {
 		initializeAWSConnection();
 		/*
 		 * Verifica se existe alguma instancia que possa receber os pedidos para fatorizar.
-		 * Caso não exista inicia uma instancia.
+		 * Caso nao exista inicia uma instancia.
 		 */
 		Set<Instance> workersGroupInstances = getAllWorkersGroupInstances();
-		//		System.out.println("Há ["+workerGroupInstances.size()+"] instancias WorkerGroup a correr");
+		//		System.out.println("Ha ["+workerGroupInstances.size()+"] instancias WorkerGroup a correr");
 		if(workersGroupInstances.size()==0){
 			createWorkersGroupInstance();
 		}
 		else{
 			for (Instance instance : workersGroupInstances) {
 				instancesInformation.addInstance_cost(instance, 0);
+				instancesInformation.addInstance_cost(instance, 0);
 			}
 		}
-		System.out.println("De momento há [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");
+		System.out.println("De momento ha [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");
 	}
 
 
 	public void stopInstance(Instance instance) throws AmazonServiceException, AmazonClientException, InterruptedException
-    {
+	{
 		final String instanceId = instance.getInstanceId();
 		final Boolean forceStop = true;
-        // Stop the instance
-        StopInstancesRequest stopRequest = new StopInstancesRequest().withInstanceIds(instanceId).withForce(forceStop);
-        StopInstancesResult startResult = ec2.stopInstances(stopRequest);
-        
+		ArrayList<String> instanceIds = new ArrayList<>();
+		instanceIds.add(instance.getInstanceId());
+		// Terminate the instance
+		TerminateInstancesRequest terminateRequest = new TerminateInstancesRequest(instanceIds);
+		ec2.terminateInstances(terminateRequest);
 
-    }
+
+	}
 
 }

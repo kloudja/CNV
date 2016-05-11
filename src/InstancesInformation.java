@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.sql.rowset.spi.SyncResolver;
+
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ecs.model.KeyValuePair;
 
@@ -32,6 +34,13 @@ public class InstancesInformation {
 		else {
 			instance_TimeCost.put(instance, new TimeCost(System.currentTimeMillis(), cost));
 		}
+	}
+	
+	public synchronized void addInstance_startTime(Instance instance, long time){
+		
+			instance_startTime.put(instance, time);
+		
+
 	}
 	
 	public LinkedHashMap<Instance, TimeCost> getInstance_TimeCost() {

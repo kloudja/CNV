@@ -99,7 +99,7 @@ public class Testes {
             RunInstancesRequest runInstancesRequest =
                new RunInstancesRequest();
 
-            runInstancesRequest.withImageId("ami-3044b650")
+            runInstancesRequest.withImageId("ami-44a05d24")
                                .withInstanceType("t2.micro")
                                .withMinCount(1)
                                .withMaxCount(1)

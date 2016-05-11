@@ -120,7 +120,7 @@ public class InstanceTools {
 		else{
 			for (Instance instance : workersGroupInstances) {
 				instancesInformation.addInstance_cost(instance, 0);
-				instancesInformation.addInstance_cost(instance, 0);
+				instancesInformation.addInstance_startTime(instance, 0);
 			}
 		}
 		System.out.println("De momento ha [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");

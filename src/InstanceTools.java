@@ -94,8 +94,7 @@ public class InstanceTools {
 		.withMaxCount(1)
 		.withKeyName("myKeyPair")
 		.withSecurityGroups("securityGroupWebServer");
-		RunInstancesResult runInstancesResult =
-				ec2.runInstances(runInstancesRequest);
+		RunInstancesResult runInstancesResult = ec2.runInstances(runInstancesRequest);
 
 		Instance instance = runInstancesResult.getReservation().getInstances().get(0);
 

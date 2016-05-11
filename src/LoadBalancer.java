@@ -24,7 +24,7 @@ public class LoadBalancer implements HttpHandler {
 		instanceTools.prepareSystem();
 		
 		//TODO Criar Auto-Scaler
-		new AutoScaler(instancesInformation).start();
+		new AutoScaler(instancesInformation, instanceTools).start();
 		
 	}
 

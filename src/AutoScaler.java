@@ -10,9 +10,9 @@ public class AutoScaler extends Thread{
 	private InstancesInformation instancesInformation;
 	private InstanceTools instanceTools;
 
-	public AutoScaler(InstancesInformation instancesInformation) {
+	public AutoScaler(InstancesInformation instancesInformation, InstanceTools instanceTools) {
 		this.instancesInformation = instancesInformation;
-		instanceTools = new InstanceTools(this.instancesInformation);
+		this.instanceTools = instanceTools;
 	}
 
 	@Override

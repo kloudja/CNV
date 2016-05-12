@@ -1,19 +1,20 @@
+import java.util.Date;
 
 public class TimeCost {
 
-	private long time;
+	private Date time;
 	private int cost;
 	
-	public TimeCost(long time, int cost) {
+	public TimeCost(Date time, int cost) {
 		this.time = time;
 		this.cost = cost;
 	}
 
-	public long getTime() {
+	public Date getTime() {
 		return time;
 	}
 
-	public void setTime(long time) {
+	public void setTime(Date time) {
 		this.time = time;
 	}
 

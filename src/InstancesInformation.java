@@ -1,6 +1,7 @@
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,12 +15,15 @@ import com.amazonaws.services.ecs.model.KeyValuePair;
 public class InstancesInformation {
 
 	private LinkedHashMap<Instance, TimeCost> instance_TimeCost;
-	private LinkedHashMap<Instance, Long> instance_startTime;
-
+	private LinkedHashMap<Instance, Date> instance_startTime;
+	private LinkedHashMap<Integer, Integer> memcache;
+	
+	
 	public InstancesInformation() {
 		super();
 		instance_TimeCost = new LinkedHashMap<>();
 		instance_startTime = new LinkedHashMap<>();
+		memcache = new LinkedHashMap<>();
 	}
 
 	public synchronized void addInstance_cost(Instance instance, int cost){
@@ -29,16 +33,16 @@ public class InstancesInformation {
 			int notUpdatedCost = timeCost.getCost();
 
 			int actualCost = notUpdatedCost + cost;
-			instance_TimeCost.put(instance, new TimeCost(System.currentTimeMillis(), actualCost));
+			instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));
 		}
 		else {
-			instance_TimeCost.put(instance, new TimeCost(System.currentTimeMillis(), cost));
+			instance_TimeCost.put(instance, new TimeCost(new Date(), cost));
 		}
 	}
 	
-	public synchronized void addInstance_startTime(Instance instance, long time){
+	public synchronized void addInstance_startTime(Instance instance, Date date){
 		
-			instance_startTime.put(instance, time);
+			instance_startTime.put(instance, date);
 		
 
 	}
@@ -51,11 +55,11 @@ public class InstancesInformation {
 		this.instance_TimeCost = instance_TimeCost;
 	}
 
-	public LinkedHashMap<Instance, Long> getInstance_startTime() {
+	public LinkedHashMap<Instance, Date> getInstance_startTime() {
 		return instance_startTime;
 	}
 
-	public void setInstance_startTime(LinkedHashMap<Instance, Long> instance_startTime) {
+	public void setInstance_startTime(LinkedHashMap<Instance, Date> instance_startTime) {
 		this.instance_startTime = instance_startTime;
 	}
 
@@ -103,7 +107,7 @@ public class InstancesInformation {
 			int notUpdatedCost = timeCost.getCost();
 
 			int actualCost = notUpdatedCost - cost;
-			instance_TimeCost.put(instance, new TimeCost(System.currentTimeMillis(), actualCost));
+			instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));
 		}
 
 	}

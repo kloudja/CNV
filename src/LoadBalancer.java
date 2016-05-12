@@ -15,7 +15,7 @@ public class LoadBalancer implements HttpHandler {
 	InstanceTools instanceTools;
 	
 	/**
-	 * Prepara o sistema com todas as instâncias necessárias para poder trabalhar normalmente. 
+	 * Prepara o sistema com todas as instancias necessarias para poder trabalhar normalmente. 
 	 */
 	public LoadBalancer() {
 		instancesInformation = new InstancesInformation();

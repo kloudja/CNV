@@ -13,30 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
-import com.amazonaws.services.dynamodbv2.model.Condition;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.DescribeTableRequest;
-import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
-import com.amazonaws.services.dynamodbv2.model.KeyType;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutItemResult;
-import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
-import com.amazonaws.services.dynamodbv2.model.ScanRequest;
-import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import com.amazonaws.services.dynamodbv2.model.TableDescription;
-import com.amazonaws.services.dynamodbv2.util.Tables;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.Instance;
@@ -52,10 +32,7 @@ import com.sun.net.httpserver.HttpExchange;
 public class LoadBalancerWorker extends Thread {
 
 	private HttpExchange httpExchange;
-	static AmazonDynamoDBClient dynamoDB;
 	int MAX_COST = 1500;
-	static AmazonEC2 ec2;
-	static AmazonCloudWatchClient cloudWatch;
 	InstanceTools instanceTools;
 
 	private InstancesInformation instancesInformation;
@@ -146,100 +123,6 @@ public class LoadBalancerWorker extends Thread {
 	}
 
 	/**
-	 * Inicia a ligação à base de dados com base no ficheiro que contem as credenciais.
-	 * 
-	 * @throws Exception
-	 */
-	private static void init() throws Exception {
-		/*
-		 * The ProfileCredentialsProvider will return your [default]
-		 * credential profile by reading from the credentials file located at
-		 * (~/.aws/credentials).
-		 */
-		AWSCredentials credentials = null;
-		try {
-			credentials = new ProfileCredentialsProvider().getCredentials();
-		} catch (Exception e) {
-			throw new AmazonClientException(
-					"Cannot load the credentials from the credential profiles file. " +
-							"Please make sure that your credentials file is at the correct " +
-							"location (~/.aws/credentials), and is in valid format.",
-							e);
-		}
-		dynamoDB = new AmazonDynamoDBClient(credentials);
-		Region usWest2 = Region.getRegion(Regions.US_WEST_2);
-		dynamoDB.setRegion(usWest2);
-	}
-
-	/**
-	 * 
-	 * Após iniciada a ligação à base de dados, verifica se já existe um custo associado ao numero pedido.
-	 * 
-	 * @param numberToFactorize numero a fatorizar
-	 * @return custo do pedido
-	 * @throws Exception
-	 */
-	private int checkMetricInDB(BigInteger numberToFactorize) throws Exception {
-
-		init();
-		int cost = 0;
-
-		try {
-			String tableName = "Costs";
-
-			// Create table if it does not exist yet
-			if (Tables.doesTableExist(dynamoDB, tableName)) {
-				//System.out.println("Table " + tableName + " is already ACTIVE");
-			} else {
-				// Create a table with a primary hash key named 'name', which holds a string
-				CreateTableRequest createTableRequest = new CreateTableRequest().withTableName(tableName)
-						.withKeySchema(new KeySchemaElement().withAttributeName("number").withKeyType(KeyType.HASH))
-						.withAttributeDefinitions(new AttributeDefinition().withAttributeName("number").withAttributeType(ScalarAttributeType.S))
-						.withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(1L).withWriteCapacityUnits(1L));
-				TableDescription createdTableDescription = dynamoDB.createTable(createTableRequest).getTableDescription();
-				System.out.println("Created Table: " + createdTableDescription);
-
-				// Wait for it to become active
-				//System.out.println("Waiting for " + tableName + " to become ACTIVE...");
-				Tables.awaitTableToBecomeActive(dynamoDB, tableName);
-			}
-
-			// Describe our new table
-			//System.out.println("==================================================================================================");
-			DescribeTableRequest describeTableRequest = new DescribeTableRequest().withTableName(tableName);
-			TableDescription tableDescription = dynamoDB.describeTable(describeTableRequest).getTable();
-			//System.out.println("Table Description: " + tableDescription);
-
-			// Scan items 
-			HashMap<String, Condition> scanFilter = new HashMap<String, Condition>();
-			Condition condition = new Condition()
-					.withComparisonOperator(ComparisonOperator.EQ.toString())
-					.withAttributeValueList(new AttributeValue().withS(numberToFactorize.toString()));
-			scanFilter.put("number", condition);
-			ScanRequest scanRequest = new ScanRequest(tableName).withScanFilter(scanFilter);
-			ScanResult scanResult = dynamoDB.scan(scanRequest);
-
-			cost = Integer.parseInt(scanResult.getItems().get(0).get("cost").getN());
-
-		} catch (AmazonServiceException ase) {
-			System.out.println("Caught an AmazonServiceException, which means your request made it "
-					+ "to AWS, but was rejected with an error response for some reason.");
-			System.out.println("Error Message:    " + ase.getMessage());
-			System.out.println("HTTP Status Code: " + ase.getStatusCode());
-			System.out.println("AWS Error Code:   " + ase.getErrorCode());
-			System.out.println("Error Type:       " + ase.getErrorType());
-			System.out.println("Request ID:       " + ase.getRequestId());
-		} catch (AmazonClientException ace) {
-			System.out.println("Caught an AmazonClientException, which means the client encountered "
-					+ "a serious internal problem while trying to communicate with AWS, "
-					+ "such as not being able to access the network.");
-			System.out.println("Error Message: " + ace.getMessage());
-		}
-
-		return cost;
-	}
-
-	/**
 	 *  Algoritmo nº1 para supor um custo para um numero caso não exista o custo desse numero na base de dados.
 	 * @param numberToFactorize numero a fatorizar
 	 * @return
@@ -280,8 +163,9 @@ public class LoadBalancerWorker extends Thread {
 
 		}
 		else{
-
+			
 			System.out.println("[LOAD BALANCER WORKER] Vou enviar para uma nova instancia que acabei de criar.");
+			
 			return instanceToSend = instanceTools.createWorkersGroupInstance();
 
 		}
@@ -334,7 +218,7 @@ public class LoadBalancerWorker extends Thread {
 			in.close();
 			
 			// Atualizar o custo atual na instancia
-			int cost = checkMetricInDB(numberToFactorize);
+			int cost = instanceTools.checkMetricInDB(numberToFactorize);
 			instancesInformation.deleteCostFromInstance(instance,cost);
 
 			stringArray = response.toString();
@@ -364,18 +248,18 @@ public class LoadBalancerWorker extends Thread {
 			//Verificar se existe metrica na base dados (se não existir vai para o catch)
 			try {
 
-				cost = checkMetricInDB(numberToFactorize);
+				cost = instanceTools.checkMetricInDB(numberToFactorize);
 
 			} catch (IndexOutOfBoundsException e1) {
-				// Faz a sopa mágica
-				cost = sopaMagica(numberToFactorize); //Algoritmo nº1
+				// Faz a sopa magica
+				cost = sopaMagica(numberToFactorize); //Algoritmo 1
 				
 			}	catch (Exception e) {
 				System.out.println(e);
 			}
 
 			// Saber para que instancia mandar o numero com base no custo previamente calculado
-			Instance instance = calculateInstance(cost);//Algoritmo nº2
+			Instance instance = calculateInstance(cost);//Algoritmo 2
 			
 			// Depois de se saber para que instancia mandar, ordena-se que ela calcule e devolva o numero fatorizado.
 			String result = sendRequest(numberToFactorize, instance);

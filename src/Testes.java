@@ -68,7 +68,7 @@ public class Testes {
 		}*/
 
 		// ================== IP ADDRESS OF INSTANCES ============================
-		try{
+		/*try{
 
 
 			System.out.println("===========================================");
@@ -144,7 +144,10 @@ public class Testes {
 			System.out.println("Error Code: " + ase.getErrorCode());
 			System.out.println("Request ID: " + ase.getRequestId());
 		}
-
+		*/
+		
+		System.out.println(System.currentTimeMillis());
+		System.out.println(new Date().getTime());
 	}
 
 	public ArrayList<Integer> calc(int number){

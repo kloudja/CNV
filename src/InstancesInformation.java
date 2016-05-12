@@ -16,7 +16,7 @@ public class InstancesInformation {
 
 	private LinkedHashMap<Instance, TimeCost> instance_TimeCost;
 	private LinkedHashMap<Instance, Date> instance_startTime;
-	private LinkedHashMap<Integer, Integer> memcache;
+	private LinkedHashMap<Long, Long> memcache;
 	
 	
 	public InstancesInformation() {
@@ -44,7 +44,10 @@ public class InstancesInformation {
 		
 			instance_startTime.put(instance, date);
 		
-
+	}
+	
+	public synchronized void addMemcache(Long number, Long cost){
+		memcache.put(number, cost);
 	}
 	
 	public LinkedHashMap<Instance, TimeCost> getInstance_TimeCost() {
@@ -61,6 +64,16 @@ public class InstancesInformation {
 
 	public void setInstance_startTime(LinkedHashMap<Instance, Date> instance_startTime) {
 		this.instance_startTime = instance_startTime;
+	}
+	
+	
+
+	public LinkedHashMap<Long, Long> getMemcache() {
+		return memcache;
+	}
+
+	public void setMemcache(LinkedHashMap<Long, Long> memcache) {
+		this.memcache = memcache;
 	}
 
 	/**

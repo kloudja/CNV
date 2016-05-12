@@ -52,11 +52,11 @@ public class InstanceTools {
 	public InstanceTools(InstancesInformation instancesInformation) {
 
 		try {
-			
+
 			initializeAWSConnection();
 			initDbConnection();
 			this.instancesInformation = instancesInformation;
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -105,7 +105,7 @@ public class InstanceTools {
 		Region usWest2 = Region.getRegion(Regions.US_WEST_2);
 		dynamoDB.setRegion(usWest2);
 	}
-	
+
 	public Set<Instance> getAllInstances(){		
 
 		DescribeInstancesResult describeInstancesResult = ec2.describeInstances();
@@ -201,6 +201,8 @@ public class InstanceTools {
 			}
 		}
 		System.out.println("De momento ha [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");
+		
+		cacheMetrics();
 	}
 
 
@@ -217,7 +219,7 @@ public class InstanceTools {
 
 	/**
 	 * 
-	 * Apos iniciada a ligacao a  base de dados, verifica se ja existe um custo associado ao numero pedido.
+	 * Apos iniciada a ligacao aï¿½ base de dados, verifica se ja existe um custo associado ao numero pedido.
 	 * 
 	 * @param numberToFactorize numero a fatorizar
 	 * @return custo do pedido
@@ -283,24 +285,25 @@ public class InstanceTools {
 	}
 
 	public void cacheMetrics(){
-		
-		ScanRequest scanRequest = new ScanRequest()
-			    .withTableName("Costs");
 
-			ScanResult result = dynamoDB.scan(scanRequest);
-			for (Map<String, AttributeValue> item : result.getItems()){
-				System.out.println("HEY");
-			   for (Entry<String, AttributeValue> iterable_element : item.entrySet()) {
-				System.out.println("[String] : "+ iterable_element.getKey() + " [AttributeValue] : " + iterable_element.getValue()); 
-			} 
+		ScanRequest scanRequest = new ScanRequest()
+				.withTableName("Costs");
+
+		ScanResult result = dynamoDB.scan(scanRequest);
+		for (Map<String, AttributeValue> item : result.getItems()){
+			long number = 0;
+			long cost = 0;
+			for (Entry<String, AttributeValue> iterable_element : item.entrySet()) {
+
+				if (iterable_element.getValue().getS() != null)
+					number = Long.parseLong(iterable_element.getValue().getS());
+				else
+					cost = Long.parseLong(iterable_element.getValue().getN());
+
 			}
+			instancesInformation.addMemcache(number, cost);
+		}
+		
+
 	}
-	
-	public static void main(String[] args) throws Exception {
-		InstanceTools i = new InstanceTools(new InstancesInformation());
-		i.initializeAWSConnection();
-		i.initDbConnection();
-		i.cacheMetrics();
-	}
-	
 }

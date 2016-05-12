@@ -43,19 +43,19 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.amazonaws.services.opsworks.model.StopInstanceRequest;
 
-public class InstanceTools {
-	AmazonEC2 ec2;
-	AmazonCloudWatchClient cloudWatch;
-	private InstancesInformation instancesInformation;
+public class AwsTools {
+	private AmazonEC2 ec2;
+	private AmazonCloudWatchClient cloudWatch;
+	private SystemInformation systemInformation;
 	private AmazonDynamoDBClient dynamoDB;
 
-	public InstanceTools(InstancesInformation instancesInformation) {
+	public AwsTools(SystemInformation systemInformation) {
 
 		try {
 
 			initializeAWSConnection();
 			initDbConnection();
-			this.instancesInformation = instancesInformation;
+			this.systemInformation = systemInformation;
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -171,8 +171,8 @@ public class InstanceTools {
 		System.out.println("[INSTANCE TOOLS] Criei nova instancia com id [" + newInstance.getInstanceId() + "] e IP ["+newInstance.getPublicIpAddress()+"]");
 
 		//Adiciona instancia a InstanceInformation!!
-		instancesInformation.addInstance_cost(newInstance, 0); 
-		instancesInformation.addInstance_startTime(newInstance, newInstance.getLaunchTime());
+		systemInformation.addInstance_cost(newInstance, 0); 
+		systemInformation.addInstance_startTime(newInstance, newInstance.getLaunchTime());
 
 		// Sleep de 30 segundos para deixar a instancia abrir as sockets
 		try {
@@ -196,8 +196,8 @@ public class InstanceTools {
 		}
 		else{
 			for (Instance instance : workersGroupInstances) {
-				instancesInformation.addInstance_cost(instance, 0);
-				instancesInformation.addInstance_startTime(instance, instance.getLaunchTime());
+				systemInformation.addInstance_cost(instance, 0);
+				systemInformation.addInstance_startTime(instance, instance.getLaunchTime());
 			}
 		}
 		System.out.println("De momento ha [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");
@@ -206,7 +206,7 @@ public class InstanceTools {
 	}
 
 
-	public void stopInstance(Instance instance) throws AmazonServiceException, AmazonClientException, InterruptedException
+	public void terminateInstance(Instance instance) throws AmazonServiceException, AmazonClientException, InterruptedException
 	{
 		final String instanceId = instance.getInstanceId();
 		final Boolean forceStop = true;
@@ -301,7 +301,7 @@ public class InstanceTools {
 					cost = Long.parseLong(iterable_element.getValue().getN());
 
 			}
-			instancesInformation.addMemcache(number, cost);
+			systemInformation.addMemcache(number, cost);
 		}
 		
 

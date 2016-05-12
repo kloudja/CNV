@@ -9,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -32,21 +33,21 @@ import com.sun.net.httpserver.HttpExchange;
 public class LoadBalancerWorker extends Thread {
 
 	private HttpExchange httpExchange;
-	int MAX_COST = 1500;
-	InstanceTools instanceTools;
+	int MAX_COST = 5000;
+	AwsTools awsTools;
 
-	private InstancesInformation instancesInformation;
+	private SystemInformation systemInformation;
 
 	/**
 	 * 
 	 * @param httpExchange
-	 * @param instancesInformation
+	 * @param systemInformation
 	 */
-	public LoadBalancerWorker(HttpExchange httpExchange, InstancesInformation instancesInformation) {
+	public LoadBalancerWorker(HttpExchange httpExchange, SystemInformation systemInformation) {
 
 		this.httpExchange = httpExchange;
-		this.instancesInformation = instancesInformation;
-		instanceTools = new InstanceTools(instancesInformation);
+		this.systemInformation = systemInformation;
+		awsTools = new AwsTools(systemInformation);
 
 	}
 
@@ -94,7 +95,7 @@ public class LoadBalancerWorker extends Thread {
 			response.append("<center><h1>INVALID ARGUMENT</h1></center><br>");
 			response.append("<center><h2>INSERT A NUMBER</h2></center><br>");
 			response.append("</body></html>");
-			WebServer.writeResponse(httpExchange, response.toString());
+			SystemStart.writeResponse(httpExchange, response.toString());
 			return (BigInteger) null;
 
 		}
@@ -123,15 +124,15 @@ public class LoadBalancerWorker extends Thread {
 	}
 
 	/**
-	 *  Algoritmo nÂº1 para supor um custo para um numero caso nÃ£o exista o custo desse numero na base de dados.
+	 *  Algoritmo nÂº1 para supor um custo para um numero caso nao exista o custo desse numero na base de dados.
 	 * @param numberToFactorize numero a fatorizar
 	 * @return
 	 */
 	private int sopaMagica(BigInteger numberToFactorize) {
 
-		//Ir buscar valores superiores e inferiores
-		
-		
+		//Ir buscar valores superiores e inferiores à cache de metricas
+
+
 		return 10000000;
 	}
 
@@ -143,18 +144,18 @@ public class LoadBalancerWorker extends Thread {
 	 * @param cost.
 	 * @return Instance.
 	 */
-	private Instance calculateInstance(int cost) {
+	private Instance calculateInstance(long cost) {
 
 		Instance instanceToSend;
 
-		instancesInformation.sortInstancesByCost();
+		systemInformation.sortInstancesByCost();
 
 		/* Depois de ordenado:
 		 * => Se o (custo atual da instancia + novo custo) < 1500 escolhe-se essa instancia
 		 * => Caso contrario, cria-se uma e escolhe-se essa instancia
 		 */
-		Instance firstInstanceOfHashMap = (Instance) instancesInformation.getInstance_TimeCost().keySet().toArray()[0];
-		int costOfFirstInstanceOfHashMap = instancesInformation.getInstance_TimeCost().get(firstInstanceOfHashMap).getCost();
+		Instance firstInstanceOfHashMap = (Instance) systemInformation.getInstance_TimeCost().keySet().toArray()[0];
+		int costOfFirstInstanceOfHashMap = systemInformation.getInstance_TimeCost().get(firstInstanceOfHashMap).getCost();
 
 		if((costOfFirstInstanceOfHashMap + cost) < MAX_COST ){
 
@@ -163,10 +164,10 @@ public class LoadBalancerWorker extends Thread {
 
 		}
 		else{
-			
+
 			System.out.println("[LOAD BALANCER WORKER] Vou enviar para uma nova instancia que acabei de criar.");
-			
-			return instanceToSend = instanceTools.createWorkersGroupInstance();
+
+			return instanceToSend = awsTools.createWorkersGroupInstance();
 
 		}
 
@@ -185,15 +186,15 @@ public class LoadBalancerWorker extends Thread {
 	private String sendRequest(BigInteger numberToFactorize, Instance instance) {
 
 		String stringArray = null;
-		
+
 		try{
 
 			String url = "http://"+instance.getPublicIpAddress()+":8000/factorizacao.html?n="+numberToFactorize.toString();
-//			String url = "http://54.200.250.35:8000/factorizacao.html?n="+numberToFactorize.toString();
-			
+			//			String url = "http://54.200.250.35:8000/factorizacao.html?n="+numberToFactorize.toString();
+
 			URL obj = new URL(url);
 			HttpURLConnection con = (HttpURLConnection) obj.openConnection();// Envia o pedido
-			
+
 			System.out.println("[LOAD BALANCER WORKER] ENVIEI O PEDIDO PARA FATORIZAR PARA O URL: [" + url + "]");
 			// optional default is GET
 			con.setRequestMethod("GET");
@@ -216,10 +217,10 @@ public class LoadBalancerWorker extends Thread {
 				response.append(inputLine);
 			}
 			in.close();
-			
+
 			// Atualizar o custo atual na instancia
-			int cost = instanceTools.checkMetricInDB(numberToFactorize);
-			instancesInformation.deleteCostFromInstance(instance,cost);
+			int cost = awsTools.checkMetricInDB(numberToFactorize);
+			systemInformation.deleteCostFromInstance(instance,cost);
 
 			stringArray = response.toString();
 
@@ -239,36 +240,50 @@ public class LoadBalancerWorker extends Thread {
 			System.out.println("=========================================================");
 
 			StringBuilder response = new StringBuilder();
+			Request request = new Request(); //Inicia um novo objeto do tipo pedido
+			request.setStart(new Date());
 
 			//Extrai o numero do URL
 			BigInteger numberToFactorize = getNumberFromURL(httpExchange, response);
+			request.setNumber(numberToFactorize);
 
-			int cost = 0;
 
-			//Verificar se existe metrica na base dados (se nÃ£o existir vai para o catch)
+			long cost = 0;
+
 			try {
 
-				cost = instanceTools.checkMetricInDB(numberToFactorize);
+				cost = systemInformation.getMemcache().get(numberToFactorize.longValue()); // Ve se ha metrica na cache
+				System.out.println("[LOAD BALANCER WORKER] Encontrei metrica na cache!");
+			} catch (Exception e) {
+				try {
+					// Se nao houver metrica em cache verifica se existe metrica na base dados
+					cost = awsTools.checkMetricInDB(numberToFactorize);
+				} catch (Exception e1) {
 
-			} catch (IndexOutOfBoundsException e1) {
+				}
+			}
+			
+			// Se não houver informação sobre o numero vai fazer estimativa
+			if(cost==0){
 				// Faz a sopa magica
 				cost = sopaMagica(numberToFactorize); //Algoritmo 1
-				
-			}	catch (Exception e) {
-				System.out.println(e);
 			}
 
 			// Saber para que instancia mandar o numero com base no custo previamente calculado
 			Instance instance = calculateInstance(cost);//Algoritmo 2
+			request.setInstance(instance);
+			//TODO Adicionar informacao ao array instance_TimeCost
 			
 			// Depois de se saber para que instancia mandar, ordena-se que ela calcule e devolva o numero fatorizado.
 			String result = sendRequest(numberToFactorize, instance);
-
+			request.setEnd(new Date());
+			systemInformation.addHistoryRequest(numberToFactorize, request);
+			
 			response.append("<html><body>");
 			response.append("The prime numbers are : " + result + "<br/>");
 			response.append("</body></html>");
 
-			WebServer.writeResponse(httpExchange, response.toString());
+			SystemStart.writeResponse(httpExchange, response.toString());
 
 		} catch (IOException e1) {
 			e1.printStackTrace();

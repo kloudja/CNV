@@ -147,7 +147,7 @@ public class Testes {
 		*/
 		
 		System.out.println(System.currentTimeMillis());
-		System.out.println(new Date().getTime());
+		System.out.println(new Date().getTime());	
 	}
 
 	public ArrayList<Integer> calc(int number){

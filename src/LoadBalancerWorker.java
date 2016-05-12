@@ -262,7 +262,7 @@ public class LoadBalancerWorker extends Thread {
 	 */
 	private Instance calculateInstance(int cost) {
 
-		Instance instanceToSend = null;
+		Instance instanceToSend;
 
 		instancesInformation.sortInstancesByCost();
 
@@ -275,12 +275,14 @@ public class LoadBalancerWorker extends Thread {
 
 		if((costOfFirstInstanceOfHashMap + cost) < MAX_COST ){
 
-			instanceToSend = firstInstanceOfHashMap;				
+			instanceToSend = firstInstanceOfHashMap;
+			System.out.println("[LOAD BALANCER WORKER] Vou enviar para a instacia a correr com menos custo.");
 
 		}
 		else{
 
-			instanceToSend = instanceTools.createWorkersGroupInstance();
+			System.out.println("[LOAD BALANCER WORKER] Vou enviar para uma nova instancia que acabei de criar.");
+			return instanceToSend = instanceTools.createWorkersGroupInstance();
 
 		}
 
@@ -308,7 +310,7 @@ public class LoadBalancerWorker extends Thread {
 			URL obj = new URL(url);
 			HttpURLConnection con = (HttpURLConnection) obj.openConnection();// Envia o pedido
 			
-			System.out.println("[LOAD BALANCER WORKER] ENVIEI O PEDIDO PARA FATORIZAR PARA O URL: [ " + url + "]");
+			System.out.println("[LOAD BALANCER WORKER] ENVIEI O PEDIDO PARA FATORIZAR PARA O URL: [" + url + "]");
 			// optional default is GET
 			con.setRequestMethod("GET");
 

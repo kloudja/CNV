@@ -28,6 +28,7 @@ public class InstanceTools {
 	private InstancesInformation instancesInformation;
 
 	public InstanceTools(InstancesInformation instancesInformation) {
+		initializeAWSConnection();
 		this.instancesInformation = instancesInformation;
 	}
 
@@ -84,7 +85,7 @@ public class InstanceTools {
 
 
 	public synchronized Instance createWorkersGroupInstance(){		
-
+		
 		RunInstancesRequest runInstancesRequest =
 				new RunInstancesRequest();
 
@@ -95,18 +96,33 @@ public class InstanceTools {
 		.withKeyName("myKeyPair")
 		.withSecurityGroups("securityGroupWebServer");
 		RunInstancesResult runInstancesResult = ec2.runInstances(runInstancesRequest);
+		Instance newInstance = runInstancesResult.getReservation().getInstances().get(0);
 
-		Instance instance = runInstancesResult.getReservation().getInstances().get(0);
+		//Fazer sleep de 2 segundos para depois ir buscar com IP
+		try {
+			Thread.sleep(1000 * 2);
+			Set<Instance> a = getAllInstances();
+			for (Instance instance : a) {
+				if(instance.getLaunchTime().compareTo(newInstance.getLaunchTime())==0){
+					System.out.println("Ip passado 2 segundos [" + instance.getPublicIpAddress() + "]");
+					newInstance = instance;
+				}
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		System.out.println("[INSTANCE TOOLS] Criei nova instancia com id [" + newInstance.getInstanceId() + "] e IP ["+newInstance.getPublicIpAddress()+"]");
 
-		instancesInformation.addInstance_cost(instance, 0); //Adiciona instancia a  InstanceInformation!!
-		instancesInformation.addInstance_startTime(instance, System.currentTimeMillis());
+		instancesInformation.addInstance_cost(newInstance, 0); //Adiciona instancia aï¿½ InstanceInformation!!
+		instancesInformation.addInstance_startTime(newInstance, System.currentTimeMillis());
 
-		return instance;
+		return newInstance;
 	}
 
 	public void prepareSystem() {
-
-		initializeAWSConnection();
 		/*
 		 * Verifica se existe alguma instancia que possa receber os pedidos para fatorizar.
 		 * Caso nao exista inicia uma instancia.

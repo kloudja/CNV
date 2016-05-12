@@ -1,9 +1,10 @@
+import java.math.BigInteger;
 import java.util.Date;
 
 public class TimeCost {
 
-	private Date time;
-	private int cost;
+	private Date time; // Tempo que começou o pedido
+	private int cost; // Custo
 	
 	public TimeCost(Date time, int cost) {
 		this.time = time;

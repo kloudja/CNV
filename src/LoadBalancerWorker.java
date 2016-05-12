@@ -11,7 +11,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
@@ -137,9 +140,9 @@ public class LoadBalancerWorker extends Thread {
 	}
 
 	/**
-	 * Algoritmo nº2.
-	 * Com base no custo previamente calculado, calcula para que instância enviar o pedido.
-	 * Se necessário, cria uma instância nova.
+	 * Algoritmo n2.
+	 * Com base no custo previamente calculado, calcula para que instancia enviar o pedido.
+	 * Se necessario, cria uma instancia nova.
 	 * 
 	 * @param cost.
 	 * @return Instance.
@@ -149,15 +152,34 @@ public class LoadBalancerWorker extends Thread {
 		Instance instanceToSend;
 
 		systemInformation.sortInstancesByCost();
-
+		LinkedHashMap<Instance, TimeCost> instanceTimeCost = systemInformation.getInstance_TimeCost();
+		
+		Instance firstInstanceOfHashMap = (Instance) instanceTimeCost.keySet().toArray()[0];
+		int lowestCost = instanceTimeCost.get(firstInstanceOfHashMap).getCost();
+		
+		// Verifica se mais que uma instancia com o custo minimo
+		LinkedList<Instance> instancesSameCost = new LinkedList<>();
+		
+		for (Entry<Instance, TimeCost> entry : instanceTimeCost.entrySet()) {
+			  if (entry.getValue().getCost() == lowestCost) {
+				  instancesSameCost.add(entry.getKey());
+			  }
+			  else
+				  break;
+			}
+		
+		//desempatar se houver mais que uma instancia pela que tem o pedido � mais tempo
+		if(instancesSameCost.size()>1){
+//			systemInformation.sortInstance_numberOfRequests();
+//		LinkedHashMap<Instance, Integer> tmpInstance_numRqts= systemInformation.getInstance_numberOfRequests();
+		
+		}
+		
 		/* Depois de ordenado:
-		 * => Se o (custo atual da instancia + novo custo) < 1500 escolhe-se essa instancia
+		 * => Se o (custo atual da instancia + novo custo) < MAX_COST escolhe-se essa instancia
 		 * => Caso contrario, cria-se uma e escolhe-se essa instancia
 		 */
-		Instance firstInstanceOfHashMap = (Instance) systemInformation.getInstance_TimeCost().keySet().toArray()[0];
-		int costOfFirstInstanceOfHashMap = systemInformation.getInstance_TimeCost().get(firstInstanceOfHashMap).getCost();
-
-		if((costOfFirstInstanceOfHashMap + cost) < MAX_COST ){
+		if((lowestCost + cost) < MAX_COST ){
 
 			instanceToSend = firstInstanceOfHashMap;
 			System.out.println("[LOAD BALANCER WORKER] Vou enviar para a instacia a correr com menos custo.");

@@ -291,12 +291,12 @@ public class AwsTools {
 
 		ScanResult result = dynamoDB.scan(scanRequest);
 		for (Map<String, AttributeValue> item : result.getItems()){
-			long number = 0;
+			BigInteger number = new BigInteger("0");
 			long cost = 0;
 			for (Entry<String, AttributeValue> iterable_element : item.entrySet()) {
 
 				if (iterable_element.getValue().getS() != null)
-					number = Long.parseLong(iterable_element.getValue().getS());
+					number = BigInteger.valueOf(Long.parseLong(iterable_element.getValue().getS()));
 				else
 					cost = Long.parseLong(iterable_element.getValue().getN());
 

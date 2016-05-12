@@ -18,9 +18,8 @@ public class SystemInformation {
 	private LinkedHashMap<Instance, TimeCost> instance_TimeCost; // A instancia X tem o custo Y desde o instante Z
 	private LinkedHashMap<Instance, Integer> instance_numberOfRequests; // Numero de pedidos que cada instancia esta a processar
 	private LinkedHashMap<Instance, Date> instance_startTime; // Tempo que cada instancia foi lancada
-	private LinkedHashMap<Long, Long> memcache; // Cache [numero->custo]
-	private LinkedHashMap<BigInteger, Request> requestMemory; // Info [numero->pedido]
-
+	private LinkedHashMap<BigInteger, Long> memcache; // Cache [numero->custo]
+	private LinkedHashMap<BigInteger, ArrayList<Request>> requestMemory; // Info [numero->pedido]
 
 	public SystemInformation() {
 		super();
@@ -53,7 +52,7 @@ public class SystemInformation {
 		}
 	}
 
-	public void addMemcache(Long number, Long cost){
+	public void addMemcache(BigInteger number, Long cost){
 		synchronized(memcache){
 			memcache.put(number, cost);
 		}
@@ -61,7 +60,9 @@ public class SystemInformation {
 
 	public void addHistoryRequest(BigInteger bigInteger, Request request){
 		synchronized(requestMemory){
-			requestMemory.put(bigInteger, request);
+			ArrayList<Request> tmp = requestMemory.get(bigInteger);
+			tmp.add(request);
+			requestMemory.put(bigInteger, tmp);
 		}
 	}
 
@@ -103,19 +104,19 @@ public class SystemInformation {
 		this.instance_startTime = instance_startTime;
 	}
 
-	public LinkedHashMap<Long, Long> getMemcache() {
+	public LinkedHashMap<BigInteger, Long> getMemcache() {
 		return memcache;
 	}
 
-	public synchronized void setMemcache(LinkedHashMap<Long, Long> memcache) {
+	public synchronized void setMemcache(LinkedHashMap<BigInteger, Long> memcache) {
 		this.memcache = memcache;
 	}
 
-	public LinkedHashMap<BigInteger, Request> getRequestMemory() {
+	public LinkedHashMap<BigInteger, ArrayList<Request>> getRequestMemory() {
 		return requestMemory;
 	}
 
-	public synchronized void setRequestMemory(LinkedHashMap<BigInteger, Request> requestMemory) {
+	public void setRequestMemory(LinkedHashMap<BigInteger, ArrayList<Request>> requestMemory) {
 		this.requestMemory = requestMemory;
 	}
 
@@ -136,35 +137,59 @@ public class SystemInformation {
 		//		map.put(c, new TimeCost(10, 6));
 		//		map.put(b, new TimeCost(10, 2));
 
+		synchronized(instance_TimeCost){
 
-		// Ordena-se
-		Object[] objectArray = instance_TimeCost.entrySet().toArray();
+			// Ordena-se
+			Object[] objectArray = instance_TimeCost.entrySet().toArray();
 
-		Arrays.sort(objectArray, new Comparator() {
-			public int compare(Object o1, Object o2) {
-				return ((Integer)((Map.Entry<Instance, TimeCost>) o1).getValue().getCost()).compareTo(
-						(Integer)((Map.Entry<Instance, TimeCost>) o2).getValue().getCost());
+			Arrays.sort(objectArray, new Comparator() {
+				public int compare(Object o1, Object o2) {
+					return ((Integer)((Map.Entry<Instance, TimeCost>) o1).getValue().getCost()).compareTo(
+							(Integer)((Map.Entry<Instance, TimeCost>) o2).getValue().getCost());
+				}
+			});
+
+			//Limpa-se o hash map desordenado e colocamos tudo novamente, mas ordenado!
+			instance_TimeCost.clear();
+
+			for (Object e : objectArray) {
+				instance_TimeCost.put(((Map.Entry<Instance, TimeCost>) e).getKey(), ((Map.Entry<Instance, TimeCost>) e).getValue());
 			}
-		});
-
-		//Limpa-se o hash map desordenado e colocamos tudo novamente, mas ordenado!
-		instance_TimeCost.clear();
-
-		for (Object e : objectArray) {
-			instance_TimeCost.put(((Map.Entry<Instance, TimeCost>) e).getKey(), ((Map.Entry<Instance, TimeCost>) e).getValue());
 		}
 	}
 
 
-	public synchronized void deleteCostFromInstance(Instance instance, int cost) {
+	public void deleteCostFromInstance(Instance instance, int cost) {
 
-		if(instance_TimeCost.containsKey(instance)){
-			TimeCost timeCost = instance_TimeCost.get(instance);
-			int notUpdatedCost = timeCost.getCost();
+		synchronized(instance_TimeCost){
+			if(instance_TimeCost.containsKey(instance)){
+				TimeCost timeCost = instance_TimeCost.get(instance);
+				int notUpdatedCost = timeCost.getCost();
 
-			int actualCost = notUpdatedCost - cost;
-			instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));
+				int actualCost = notUpdatedCost - cost;
+				instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));
+			}
 		}
+	}
 
+	public void sortInstance_numberOfRequests(){
+
+		synchronized(instance_numberOfRequests){
+			Object[] objArray = instance_numberOfRequests.entrySet().toArray();
+			Arrays.sort(objArray, new Comparator() {
+				public int compare(Object o1, Object o2) {
+					return ((Map.Entry<Instance, Integer>) o1).getValue().compareTo(
+							((Map.Entry<Instance, Integer>) o2).getValue());
+				}
+			});
+
+
+			//Limpa-se o hash map desordenado e colocamos tudo novamente, mas ordenado!
+			instance_numberOfRequests.clear();
+
+			for (Object e : objArray) {
+				instance_numberOfRequests.put(((Map.Entry<Instance, Integer>) e).getKey(), ((Map.Entry<Instance, Integer>) e).getValue());
+			}
+		}
 	}
 }

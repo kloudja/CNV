@@ -16,24 +16,40 @@ import com.amazonaws.services.ec2.model.RunInstancesResult;
 
 public class Testes {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 
 		// ================== ORDENAR HASH MAP =========================================
-		/*HashMap<String, Integer> map = new HashMap<String, Integer>();
-	    map.put("a", 4);
-	    map.put("c", 6);
-	    map.put("b", 2);
-	    Object[] a = map.entrySet().toArray();
-	    Arrays.sort(a, new Comparator() {
+		Instance a = new Instance();
+		a.setInstanceId("a");
+		Instance b = new Instance();
+		b.setInstanceId("b");
+		Instance c = new Instance();
+		c.setInstanceId("c");
+		Instance d = new Instance();
+		d.setInstanceId("d");
+		
+		HashMap<Instance, Date> map = new HashMap<Instance, Date>();
+		Date date = new Date();
+	    map.put(d, date);
+	    Thread.sleep(1000 * 30);
+	    map.put(b, new Date());
+	    Thread.sleep(1000 * 30);
+	    map.put(c, new Date());
+	    Thread.sleep(1000 * 30);
+	    map.put(a, date);
+
+	    
+	    Object[] objArray = map.entrySet().toArray();
+	    Arrays.sort(objArray, new Comparator() {
 	        public int compare(Object o1, Object o2) {
-	            return ((Map.Entry<String, Integer>) o2).getValue().compareTo(
-	                    ((Map.Entry<String, Integer>) o1).getValue());
+	            return ((Map.Entry<Instance, Date>) o1).getValue().compareTo(
+	                    ((Map.Entry<Instance, Date>) o2).getValue());
 	        }
 	    });
-	    for (Object e : a) {
-	        System.out.println(((Map.Entry<String, Integer>) e).getKey() + " : "
-	                + ((Map.Entry<String, Integer>) e).getValue());
-	    }*/
+	    for (Object e : objArray) {
+	        System.out.println(((Map.Entry<Instance, Date>) e).getKey().getInstanceId() + " : "
+	                + ((Map.Entry<Instance, Date>) e).getValue());
+	    }
 
 		// ================== PRIMEIRO ELEMENTO DO HASH MAP ============================
 		/*HashMap<String, Integer> map = new HashMap<String, Integer>();
@@ -145,9 +161,10 @@ public class Testes {
 			System.out.println("Request ID: " + ase.getRequestId());
 		}
 		*/
-		
+		/*
 		System.out.println(System.currentTimeMillis());
 		System.out.println(new Date().getTime());	
+		*/
 	}
 
 	public ArrayList<Integer> calc(int number){

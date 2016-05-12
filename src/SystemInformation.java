@@ -29,14 +29,14 @@ public class SystemInformation {
 		requestMemory = new LinkedHashMap<>();
 	}
 
-	public void addInstance_cost(Instance instance, int cost){
+	public void addInstance_cost(Instance instance, long cost){
 
 		synchronized(instance_TimeCost){
 			if(instance_TimeCost.containsKey(instance)){
 				TimeCost timeCost = instance_TimeCost.get(instance);
-				int notUpdatedCost = timeCost.getCost();
+				long notUpdatedCost = timeCost.getCost();
 
-				int actualCost = notUpdatedCost + cost;
+				long actualCost = notUpdatedCost + cost;
 				instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));
 			}
 			else {
@@ -144,8 +144,8 @@ public class SystemInformation {
 
 			Arrays.sort(objectArray, new Comparator() {
 				public int compare(Object o1, Object o2) {
-					return ((Integer)((Map.Entry<Instance, TimeCost>) o1).getValue().getCost()).compareTo(
-							(Integer)((Map.Entry<Instance, TimeCost>) o2).getValue().getCost());
+					return ((Long)((Map.Entry<Instance, TimeCost>) o1).getValue().getCost()).compareTo(
+							(Long)((Map.Entry<Instance, TimeCost>) o2).getValue().getCost());
 				}
 			});
 
@@ -159,14 +159,14 @@ public class SystemInformation {
 	}
 
 
-	public void deleteCostFromInstance(Instance instance, int cost) {
+	public void deleteCostFromInstance(Instance instance, long cost) {
 
 		synchronized(instance_TimeCost){
 			if(instance_TimeCost.containsKey(instance)){
 				TimeCost timeCost = instance_TimeCost.get(instance);
-				int notUpdatedCost = timeCost.getCost();
+				long notUpdatedCost = timeCost.getCost();
 
-				int actualCost = notUpdatedCost - cost;
+				long actualCost = notUpdatedCost - cost;
 				instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));
 			}
 		}

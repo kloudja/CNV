@@ -42,13 +42,13 @@ public class AutoScaler extends Thread{
 		
 		// Apagar instancias
 		for (Entry<Instance, TimeCost> entry : tmpInstance_TimeCost.entrySet()) {
-			int entryCost = entry.getValue().getCost();
+			long entryCost = entry.getValue().getCost();
 			Date entryCostTime= entry.getValue().getTime();
 			Date instanteStartTime = tmpInstance_startTime.get(entry.getKey());
 			Date currentTime = new Date();
 			long dezMinutos = 1000*60*10;
 			//long pertDumaHora = 1000*60*50; //cinquenta minutos
-			long pertDumaHora = 1000*60*2; //dois munutos
+			long pertDumaHora = 1000*60*2; //dois minutos
 			
 			if(entryCost==0// Se a instancia nao tiver custo nenhum
 					&& ((entryCostTime.getTime() - currentTime.getTime()) >= dezMinutos)//estiver ha 10 minutos sem fazer nada 

@@ -131,10 +131,10 @@ public class LoadBalancerWorker extends Thread {
 	 * @param numberToFactorize numero a fatorizar
 	 * @return
 	 */
-	private int sopaMagica(BigInteger numberToFactorize) {
+	private long sopaMagica(BigInteger numberToFactorize) {
 
 		//Ir buscar valores superiores e inferiores à cache de metricas
-
+		//TODO FAZER!!!!!
 
 		return 10000000;
 	}
@@ -155,14 +155,14 @@ public class LoadBalancerWorker extends Thread {
 		LinkedHashMap<Instance, TimeCost> instanceTimeCost = systemInformation.getInstance_TimeCost();
 		
 		Instance firstInstanceOfHashMap = (Instance) instanceTimeCost.keySet().toArray()[0];
-		int lowestCost = instanceTimeCost.get(firstInstanceOfHashMap).getCost();
+		long lowestCost = instanceTimeCost.get(firstInstanceOfHashMap).getCost();
 		
 		// Verifica se mais que uma instancia com o custo minimo
-		LinkedList<Instance> instancesSameCost = new LinkedList<>();
+		LinkedHashMap<Instance, TimeCost> instancesSameCost = new LinkedHashMap<>();
 		
 		for (Entry<Instance, TimeCost> entry : instanceTimeCost.entrySet()) {
 			  if (entry.getValue().getCost() == lowestCost) {
-				  instancesSameCost.add(entry.getKey());
+				  instancesSameCost.put(entry.getKey(), entry.getValue());
 			  }
 			  else
 				  break;
@@ -170,9 +170,14 @@ public class LoadBalancerWorker extends Thread {
 		
 		//desempatar se houver mais que uma instancia pela que tem o pedido à mais tempo
 		if(instancesSameCost.size()>1){
-//			systemInformation.sortInstance_numberOfRequests();
-//		LinkedHashMap<Instance, Integer> tmpInstance_numRqts= systemInformation.getInstance_numberOfRequests();
-		
+			System.out.println("[LOAD BALANCER WORKER] Ha mais que uma instancia com o mesmo custo!");
+			Date date = new Date();
+			for(Entry<Instance, TimeCost> entry : instancesSameCost.entrySet()){
+				if(entry.getValue().getTime().compareTo(date)<0){
+					date = entry.getValue().getTime();
+					instanceToSend = entry.getKey();
+				}
+			}
 		}
 		
 		/* Depois de ordenado:
@@ -203,9 +208,10 @@ public class LoadBalancerWorker extends Thread {
 	 * 
 	 * @param numberToFactorize numero a fatorizar
 	 * @param instance 
+	 * @param cost 
 	 * @return resultado da fatorizaÃ§Ã£o
 	 */
-	private String sendRequest(BigInteger numberToFactorize, Instance instance) {
+	private String sendRequest(BigInteger numberToFactorize, Instance instance, long cost2) {
 
 		String stringArray = null;
 
@@ -216,6 +222,7 @@ public class LoadBalancerWorker extends Thread {
 
 			URL obj = new URL(url);
 			HttpURLConnection con = (HttpURLConnection) obj.openConnection();// Envia o pedido
+			systemInformation.addInstance_cost(instance, cost2);
 
 			System.out.println("[LOAD BALANCER WORKER] ENVIEI O PEDIDO PARA FATORIZAR PARA O URL: [" + url + "]");
 			// optional default is GET
@@ -241,7 +248,7 @@ public class LoadBalancerWorker extends Thread {
 			in.close();
 
 			// Atualizar o custo atual na instancia
-			int cost = awsTools.checkMetricInDB(numberToFactorize);
+			long cost = awsTools.checkMetricInDB(numberToFactorize);
 			systemInformation.deleteCostFromInstance(instance,cost);
 
 			stringArray = response.toString();
@@ -274,12 +281,13 @@ public class LoadBalancerWorker extends Thread {
 
 			try {
 
-				cost = systemInformation.getMemcache().get(numberToFactorize.longValue()); // Ve se ha metrica na cache
+				cost = systemInformation.getMemcache().get(numberToFactorize); // Ve se ha metrica na cache
 				System.out.println("[LOAD BALANCER WORKER] Encontrei metrica na cache!");
 			} catch (Exception e) {
 				try {
 					// Se nao houver metrica em cache verifica se existe metrica na base dados
 					cost = awsTools.checkMetricInDB(numberToFactorize);
+					System.out.println("[LOAD BALANCER WORKER] Encontrei metrica na base de dados!");
 				} catch (Exception e1) {
 
 				}
@@ -289,15 +297,15 @@ public class LoadBalancerWorker extends Thread {
 			if(cost==0){
 				// Faz a sopa magica
 				cost = sopaMagica(numberToFactorize); //Algoritmo 1
+				System.out.println("[LOAD BALANCER WORKER] Fiz a sopa magica!");
 			}
 
 			// Saber para que instancia mandar o numero com base no custo previamente calculado
 			Instance instance = calculateInstance(cost);//Algoritmo 2
 			request.setInstance(instance);
-			//TODO Adicionar informacao ao array instance_TimeCost
 			
 			// Depois de se saber para que instancia mandar, ordena-se que ela calcule e devolva o numero fatorizado.
-			String result = sendRequest(numberToFactorize, instance);
+			String result = sendRequest(numberToFactorize, instance, cost);
 			request.setEnd(new Date());
 			systemInformation.addHistoryRequest(numberToFactorize, request);
 			

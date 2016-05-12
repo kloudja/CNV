@@ -4,9 +4,9 @@ import java.util.Date;
 public class TimeCost {
 
 	private Date time; // Tempo que começou o pedido
-	private int cost; // Custo
+	private long cost; // Custo
 	
-	public TimeCost(Date time, int cost) {
+	public TimeCost(Date time, long cost) {
 		this.time = time;
 		this.cost = cost;
 	}
@@ -19,11 +19,11 @@ public class TimeCost {
 		this.time = time;
 	}
 
-	public int getCost() {
+	public long getCost() {
 		return cost;
 	}
 
-	public void setCost(int cost) {
+	public void setCost(long cost) {
 		this.cost = cost;
 	}
 	

@@ -36,7 +36,7 @@ import com.sun.net.httpserver.HttpExchange;
 public class LoadBalancerWorker extends Thread {
 
 	private HttpExchange httpExchange;
-	long MAX_COST = 35000000;
+	long MAX_COST = 250000000; // Previemente calculado
 	AwsTools awsTools;
 
 	private SystemInformation systemInformation;
@@ -153,6 +153,8 @@ public class LoadBalancerWorker extends Thread {
 	 */
 	private Instance calculateInstance(long cost) {
 
+		//TODO Só cria nova instancia se a instancia não tiver nenhum podido
+		
 		Instance instanceToSend = null;
 
 		systemInformation.sortInstancesByCost();
@@ -232,7 +234,8 @@ public class LoadBalancerWorker extends Thread {
 			URL obj = new URL(url);
 			HttpURLConnection con = (HttpURLConnection) obj.openConnection();// Envia o pedido
 			systemInformation.addInstance_cost(instance, cost2);
-
+			systemInformation.addRequestToInstance(instance);
+			
 			System.out.println("[LOAD BALANCER WORKER] ENVIEI O PEDIDO PARA FATORIZAR PARA O URL: [" + url + "]");
 			// optional default is GET
 			con.setRequestMethod("GET");
@@ -259,6 +262,7 @@ public class LoadBalancerWorker extends Thread {
 			// Atualizar o custo atual na instancia
 			long cost = awsTools.checkMetricInDB(numberToFactorize);
 			systemInformation.deleteCostFromInstance(instance,cost);
+			systemInformation.deleteRequestToInstance(instance);
 
 			stringArray = response.toString();
 

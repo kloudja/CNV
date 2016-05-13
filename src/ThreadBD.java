@@ -25,13 +25,13 @@ import com.amazonaws.services.dynamodbv2.util.Tables;
 public class ThreadBD extends Thread {
 
 	private BigInteger bigInteger;
-	private int cost;
+	private long cost;
 	private static AmazonDynamoDBClient dynamoDB;
 
-	public ThreadBD(BigInteger bigInteger, int cost) {
+	public ThreadBD(BigInteger bigInteger, long custo) {
 		//this.setDaemon(true);
 		this.bigInteger = bigInteger;
-		this.cost = cost;
+		this.cost = custo;
 		try {
 			init();
 		} catch (Exception e) {
@@ -118,10 +118,10 @@ public class ThreadBD extends Thread {
 		}
 	}
 
-	private static Map<String, AttributeValue> newItem(BigInteger number, int cost) {
+	private static Map<String, AttributeValue> newItem(BigInteger number, long cost) {
 		Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
 		item.put("number", new AttributeValue(number.toString()));
-		item.put("cost", new AttributeValue().withN(Integer.toString(cost)));
+		item.put("cost", new AttributeValue().withN(Long.toString(cost)));
 
 		return item;
 	}

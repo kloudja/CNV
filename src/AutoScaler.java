@@ -22,7 +22,7 @@ public class AutoScaler extends Thread{
 
 		while(true){
 			try {
-				Thread.sleep(1000 * 10 * 1); // 3 minutos
+				Thread.sleep(1000 * 10 * 3); // 3 minutos
 
 				awsTools.cacheMetrics(); // Faz cache das metricas
 				checkForInstancesToTerminte(); //Verifica se ha instancias para serem terminadas

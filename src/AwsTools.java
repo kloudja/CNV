@@ -174,6 +174,7 @@ public class AwsTools {
 		//Adiciona instancia a InstanceInformation!!
 		systemInformation.addInstance_cost(newInstance, 0); 
 		systemInformation.addInstance_startTime(newInstance, newInstance.getLaunchTime());
+		systemInformation.addZeroRequestsToInstance(newInstance);
 
 		// Sleep de 3 minutos para deixar a instancia abrir as sockets
 		try {
@@ -196,15 +197,19 @@ public class AwsTools {
 			createWorkersGroupInstance();
 		}
 		else{
+			int runningInstances = 0;
 			for (Instance instance : workersGroupInstances) {
 				if(instance.getState().getName().equals("running")){
+					runningInstances++;
 						systemInformation.addInstance_cost(instance, 0);
 						systemInformation.addInstance_startTime(instance, instance.getLaunchTime());
 						systemInformation.addZeroRequestsToInstance(instance);
 			}
 		}
+			if(runningInstances==0)
+				createWorkersGroupInstance();
 	}
-	System.out.println("De momento ha [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");
+	System.out.println("De momento ha [" + systemInformation.getInstance_TimeCost().keySet().size() + "] WorkersGroupInstances a correr");
 
 	cacheMetrics();
 }

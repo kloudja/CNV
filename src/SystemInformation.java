@@ -37,10 +37,10 @@ public class SystemInformation {
 				long notUpdatedCost = timeCost.getCost();
 
 				long actualCost = notUpdatedCost + cost;
-				instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));
+				instance_TimeCost.put(instance, new TimeCost(instance.getLaunchTime(), actualCost));
 			}
 			else {
-				instance_TimeCost.put(instance, new TimeCost(new Date(), cost));
+				instance_TimeCost.put(instance, new TimeCost(instance.getLaunchTime(), cost));
 			}
 		}
 	}
@@ -60,9 +60,16 @@ public class SystemInformation {
 
 	public void addHistoryRequest(BigInteger bigInteger, Request request){
 		synchronized(requestMemory){
-			ArrayList<Request> tmp = requestMemory.get(bigInteger);
-			tmp.add(request);
-			requestMemory.put(bigInteger, tmp);
+			if(requestMemory.containsKey(bigInteger)){
+				ArrayList<Request> tmp = requestMemory.get(bigInteger);
+				tmp.add(request);
+				requestMemory.put(bigInteger, tmp);
+			}
+			else{
+				ArrayList<Request> tmp = new ArrayList<>();
+				tmp.add(request);
+				requestMemory.put(bigInteger, tmp);
+			}
 		}
 	}
 
@@ -158,13 +165,19 @@ public class SystemInformation {
 		}
 	}
 
+	public void deleteInstance(Instance instance){
+		//TODO MELHORAR PARA APAGAR DE TODOS OS ARRAYS
+		synchronized(instance_TimeCost){
+			instance_TimeCost.remove(instance);
+		}
+	}
 
 	public void deleteCostFromInstance(Instance instance, long cost) {
 
 		synchronized(instance_TimeCost){
 			if(instance_TimeCost.containsKey(instance)){
-				TimeCost timeCost = instance_TimeCost.get(instance);
-				long notUpdatedCost = timeCost.getCost();
+				TimeCost antigoTimeCost = instance_TimeCost.get(instance);
+				long notUpdatedCost = antigoTimeCost.getCost();
 
 				long actualCost = notUpdatedCost - cost;
 				instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));

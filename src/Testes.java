@@ -19,7 +19,7 @@ public class Testes {
 	public static void main(String[] args) throws InterruptedException {
 
 		// ================== ORDENAR HASH MAP =========================================
-		Instance a = new Instance();
+		/*Instance a = new Instance();
 		a.setInstanceId("a");
 		Instance b = new Instance();
 		b.setInstanceId("b");
@@ -49,7 +49,7 @@ public class Testes {
 	    for (Object e : objArray) {
 	        System.out.println(((Map.Entry<Instance, Date>) e).getKey().getInstanceId() + " : "
 	                + ((Map.Entry<Instance, Date>) e).getValue());
-	    }
+	    }*/
 
 		// ================== PRIMEIRO ELEMENTO DO HASH MAP ============================
 		/*HashMap<String, Integer> map = new HashMap<String, Integer>();
@@ -165,6 +165,15 @@ public class Testes {
 		System.out.println(System.currentTimeMillis());
 		System.out.println(new Date().getTime());	
 		*/
+		
+		Date a = new Date(1, 2, 3, 4, 5);
+		Date c = new Date(1, 2, 3, 5, 4);
+		Date b = new Date(1, 2, 3, 4, 6);
+		
+		System.out.println(a.compareTo(b)<0);
+		System.out.println(a.compareTo(c)<0);
+		System.out.println(c.compareTo(b)<0);
+
 	}
 
 	public ArrayList<Integer> calc(int number){

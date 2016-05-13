@@ -22,7 +22,7 @@ public class AutoScaler extends Thread{
 
 		while(true){
 			try {
-				Thread.sleep(1000 * 60 * 3); // 3 minutos
+				Thread.sleep(1000 * 10 * 1); // 3 minutos
 
 				awsTools.cacheMetrics(); // Faz cache das metricas
 				checkForInstancesToTerminte(); //Verifica se ha instancias para serem terminadas
@@ -50,11 +50,19 @@ public class AutoScaler extends Thread{
 			//long pertDumaHora = 1000*60*50; //cinquenta minutos
 			long pertDumaHora = 1000*60*2; //dois minutos
 			
+			System.out.println("====================================================");
+			System.out.println("[AUTO SCALER] entryCost==0 " + (entryCost==0));
+			System.out.println("[AUTO SCALER] currentTime.getTime() - entryCostTime.getTime() = " + (currentTime.getTime() - entryCostTime.getTime()));
+			System.out.println("[AUTO SCALER] currentTime.getTime() - entryCostTime.getTime() ) >= dezMinutos " + ((currentTime.getTime() - entryCostTime.getTime())>dezMinutos));
+			System.out.println("[AUTO SCALER] currentTime.getTime() - instanteStartTime.getTime()) = " + ( currentTime.getTime() - instanteStartTime.getTime()));
+			System.out.println("[AUTO SCALER] ( currentTime.getTime() - instanteStartTime.getTime()) >= pertDumaHora) " + (( currentTime.getTime() - instanteStartTime.getTime()) >= pertDumaHora));
+			
 			if(entryCost==0// Se a instancia nao tiver custo nenhum
-					&& ((entryCostTime.getTime() - currentTime.getTime()) >= dezMinutos)//estiver ha 10 minutos sem fazer nada 
-					&& ((instanteStartTime.getTime() - currentTime.getTime()) >= pertDumaHora)){//e tiver sido iniciada ha 50 minutos
+					&& (( currentTime.getTime() - entryCostTime.getTime() ) >= dezMinutos)//estiver ha 10 minutos sem fazer nada 
+					&& (( currentTime.getTime() - instanteStartTime.getTime()) >= pertDumaHora)){//e tiver sido iniciada ha 50 minutos
 				System.out.println("[AUTO SCALER] Vou apagar a instancia com ID : [" + entry.getKey().getInstanceId() + "]"); 
 				awsTools.terminateInstance(entry.getKey());
+				
 			}
 		}
 	}

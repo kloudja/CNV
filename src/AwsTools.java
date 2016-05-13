@@ -1,5 +1,6 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -168,15 +169,15 @@ public class AwsTools {
 		}
 
 
-		System.out.println("[INSTANCE TOOLS] Criei nova instancia com id [" + newInstance.getInstanceId() + "] e IP ["+newInstance.getPublicIpAddress()+"]");
+		System.out.println("[INSTANCE TOOLS] " + new Date() + "Criei nova instancia com id [" + newInstance.getInstanceId() + "] e IP ["+newInstance.getPublicIpAddress()+"]");
 
 		//Adiciona instancia a InstanceInformation!!
 		systemInformation.addInstance_cost(newInstance, 0); 
 		systemInformation.addInstance_startTime(newInstance, newInstance.getLaunchTime());
 
-		// Sleep de 30 segundos para deixar a instancia abrir as sockets
+		// Sleep de 3 minutos para deixar a instancia abrir as sockets
 		try {
-			Thread.sleep(1000*30);
+			Thread.sleep(1000*60*3);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -196,114 +197,116 @@ public class AwsTools {
 		}
 		else{
 			for (Instance instance : workersGroupInstances) {
-				systemInformation.addInstance_cost(instance, 0);
-				systemInformation.addInstance_startTime(instance, instance.getLaunchTime());
+				if(instance.getState().getName().equals("running")){
+						systemInformation.addInstance_cost(instance, 0);
+						systemInformation.addInstance_startTime(instance, instance.getLaunchTime());
 			}
 		}
-		System.out.println("De momento ha [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");
-		
-		cacheMetrics();
 	}
+	System.out.println("De momento ha [" + workersGroupInstances.size() + "] WorkersGroupInstances a correr");
+
+	cacheMetrics();
+}
 
 
-	public void terminateInstance(Instance instance) throws AmazonServiceException, AmazonClientException, InterruptedException
-	{
-		final String instanceId = instance.getInstanceId();
-		final Boolean forceStop = true;
-		ArrayList<String> instanceIds = new ArrayList<>();
-		instanceIds.add(instance.getInstanceId());
-		// Terminate the instance
-		TerminateInstancesRequest terminateRequest = new TerminateInstancesRequest(instanceIds);
-		ec2.terminateInstances(terminateRequest);
-	}
+public void terminateInstance(Instance instance) throws AmazonServiceException, AmazonClientException, InterruptedException
+{
+	final String instanceId = instance.getInstanceId();
+	final Boolean forceStop = true;
+	ArrayList<String> instanceIds = new ArrayList<>();
+	instanceIds.add(instance.getInstanceId());
+	// Terminate the instance
+	TerminateInstancesRequest terminateRequest = new TerminateInstancesRequest(instanceIds);
+	ec2.terminateInstances(terminateRequest);
+}
 
-	/**
-	 * 
-	 * Apos iniciada a ligacao a� base de dados, verifica se ja existe um custo associado ao numero pedido.
-	 * 
-	 * @param numberToFactorize numero a fatorizar
-	 * @return custo do pedido
-	 * @throws Exception
-	 */
-	public int checkMetricInDB(BigInteger numberToFactorize) throws Exception {
+/**
+ * 
+ * Apos iniciada a ligacao a� base de dados, verifica se ja existe um custo associado ao numero pedido.
+ * 
+ * @param numberToFactorize numero a fatorizar
+ * @return custo do pedido
+ * @throws Exception
+ */
+public int checkMetricInDB(BigInteger numberToFactorize) throws Exception {
 
-		int cost = 0;
+	int cost = 0;
 
-		try {
-			String tableName = "Costs";
+	try {
+		String tableName = "Costs";
 
-			// Create table if it does not exist yet
-			if (Tables.doesTableExist(dynamoDB, tableName)) {
-				//System.out.println("Table " + tableName + " is already ACTIVE");
-			} else {
-				// Create a table with a primary hash key named 'name', which holds a string
-				CreateTableRequest createTableRequest = new CreateTableRequest().withTableName(tableName)
-						.withKeySchema(new KeySchemaElement().withAttributeName("number").withKeyType(KeyType.HASH))
-						.withAttributeDefinitions(new AttributeDefinition().withAttributeName("number").withAttributeType(ScalarAttributeType.S))
-						.withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(1L).withWriteCapacityUnits(1L));
-				TableDescription createdTableDescription = dynamoDB.createTable(createTableRequest).getTableDescription();
-				System.out.println("Created Table: " + createdTableDescription);
+		// Create table if it does not exist yet
+		if (Tables.doesTableExist(dynamoDB, tableName)) {
+			//System.out.println("Table " + tableName + " is already ACTIVE");
+		} else {
+			// Create a table with a primary hash key named 'name', which holds a string
+			CreateTableRequest createTableRequest = new CreateTableRequest().withTableName(tableName)
+					.withKeySchema(new KeySchemaElement().withAttributeName("number").withKeyType(KeyType.HASH))
+					.withAttributeDefinitions(new AttributeDefinition().withAttributeName("number").withAttributeType(ScalarAttributeType.S))
+					.withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(1L).withWriteCapacityUnits(1L));
+			TableDescription createdTableDescription = dynamoDB.createTable(createTableRequest).getTableDescription();
+			System.out.println("Created Table: " + createdTableDescription);
 
-				// Wait for it to become active
-				//System.out.println("Waiting for " + tableName + " to become ACTIVE...");
-				Tables.awaitTableToBecomeActive(dynamoDB, tableName);
-			}
-
-			// Describe our new table
-			//System.out.println("==================================================================================================");
-			DescribeTableRequest describeTableRequest = new DescribeTableRequest().withTableName(tableName);
-			TableDescription tableDescription = dynamoDB.describeTable(describeTableRequest).getTable();
-			//System.out.println("Table Description: " + tableDescription);
-
-			// Scan items 
-			HashMap<String, Condition> scanFilter = new HashMap<String, Condition>();
-			Condition condition = new Condition()
-					.withComparisonOperator(ComparisonOperator.EQ.toString())
-					.withAttributeValueList(new AttributeValue().withS(numberToFactorize.toString()));
-			scanFilter.put("number", condition);
-			ScanRequest scanRequest = new ScanRequest(tableName).withScanFilter(scanFilter);
-			ScanResult scanResult = dynamoDB.scan(scanRequest);
-
-			cost = Integer.parseInt(scanResult.getItems().get(0).get("cost").getN());
-
-		} catch (AmazonServiceException ase) {
-			System.out.println("Caught an AmazonServiceException, which means your request made it "
-					+ "to AWS, but was rejected with an error response for some reason.");
-			System.out.println("Error Message:    " + ase.getMessage());
-			System.out.println("HTTP Status Code: " + ase.getStatusCode());
-			System.out.println("AWS Error Code:   " + ase.getErrorCode());
-			System.out.println("Error Type:       " + ase.getErrorType());
-			System.out.println("Request ID:       " + ase.getRequestId());
-		} catch (AmazonClientException ace) {
-			System.out.println("Caught an AmazonClientException, which means the client encountered "
-					+ "a serious internal problem while trying to communicate with AWS, "
-					+ "such as not being able to access the network.");
-			System.out.println("Error Message: " + ace.getMessage());
+			// Wait for it to become active
+			//System.out.println("Waiting for " + tableName + " to become ACTIVE...");
+			Tables.awaitTableToBecomeActive(dynamoDB, tableName);
 		}
 
-		return cost;
+		// Describe our new table
+		//System.out.println("==================================================================================================");
+		DescribeTableRequest describeTableRequest = new DescribeTableRequest().withTableName(tableName);
+		TableDescription tableDescription = dynamoDB.describeTable(describeTableRequest).getTable();
+		//System.out.println("Table Description: " + tableDescription);
+
+		// Scan items 
+		HashMap<String, Condition> scanFilter = new HashMap<String, Condition>();
+		Condition condition = new Condition()
+				.withComparisonOperator(ComparisonOperator.EQ.toString())
+				.withAttributeValueList(new AttributeValue().withS(numberToFactorize.toString()));
+		scanFilter.put("number", condition);
+		ScanRequest scanRequest = new ScanRequest(tableName).withScanFilter(scanFilter);
+		ScanResult scanResult = dynamoDB.scan(scanRequest);
+
+		cost = Integer.parseInt(scanResult.getItems().get(0).get("cost").getN());
+
+	} catch (AmazonServiceException ase) {
+		System.out.println("Caught an AmazonServiceException, which means your request made it "
+				+ "to AWS, but was rejected with an error response for some reason.");
+		System.out.println("Error Message:    " + ase.getMessage());
+		System.out.println("HTTP Status Code: " + ase.getStatusCode());
+		System.out.println("AWS Error Code:   " + ase.getErrorCode());
+		System.out.println("Error Type:       " + ase.getErrorType());
+		System.out.println("Request ID:       " + ase.getRequestId());
+	} catch (AmazonClientException ace) {
+		System.out.println("Caught an AmazonClientException, which means the client encountered "
+				+ "a serious internal problem while trying to communicate with AWS, "
+				+ "such as not being able to access the network.");
+		System.out.println("Error Message: " + ace.getMessage());
 	}
 
-	public void cacheMetrics(){
+	return cost;
+}
 
-		ScanRequest scanRequest = new ScanRequest()
-				.withTableName("Costs");
+public void cacheMetrics(){
 
-		ScanResult result = dynamoDB.scan(scanRequest);
-		for (Map<String, AttributeValue> item : result.getItems()){
-			BigInteger number = new BigInteger("0");
-			long cost = 0;
-			for (Entry<String, AttributeValue> iterable_element : item.entrySet()) {
+	ScanRequest scanRequest = new ScanRequest()
+			.withTableName("Costs");
 
-				if (iterable_element.getValue().getS() != null)
-					number = BigInteger.valueOf(Long.parseLong(iterable_element.getValue().getS()));
-				else
-					cost = Long.parseLong(iterable_element.getValue().getN());
+	ScanResult result = dynamoDB.scan(scanRequest);
+	for (Map<String, AttributeValue> item : result.getItems()){
+		BigInteger number = new BigInteger("0");
+		long cost = 0;
+		for (Entry<String, AttributeValue> iterable_element : item.entrySet()) {
 
-			}
-			systemInformation.addMemcache(number, cost);
+			if (iterable_element.getValue().getS() != null)
+				number = BigInteger.valueOf(Long.parseLong(iterable_element.getValue().getS()));
+			else
+				cost = Long.parseLong(iterable_element.getValue().getN());
+
 		}
-		
-
+		systemInformation.addMemcache(number, cost);
 	}
+
+
+}
 }

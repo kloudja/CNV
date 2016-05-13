@@ -29,7 +29,7 @@ public class ThreadBD extends Thread {
 	private static AmazonDynamoDBClient dynamoDB;
 
 	public ThreadBD(BigInteger bigInteger, int cost) {
-		this.setDaemon(true);
+		//this.setDaemon(true);
 		this.bigInteger = bigInteger;
 		this.cost = cost;
 		try {
@@ -100,7 +100,8 @@ public class ThreadBD extends Thread {
 			Map<String, AttributeValue> item = newItem(bigInteger, cost);
 			PutItemRequest putItemRequest = new PutItemRequest(tableName, item);
 			PutItemResult putItemResult = dynamoDB.putItem(putItemRequest);
-
+			System.out.println("Pus valor na base de dados " + putItemResult);
+			
 		} catch (AmazonServiceException ase) {
 			System.out.println("Caught an AmazonServiceException, which means your request made it "
 					+ "to AWS, but was rejected with an error response for some reason.");
@@ -139,7 +140,9 @@ public class ThreadBD extends Thread {
 	}
 
 	public static void main(String[] args) {
+		System.out.println("Lançou a thread");
 		new ThreadBD(new BigInteger("10"), 50).start();
+		System.out.println("Acabou a thread");
 	}
 	
 }

@@ -133,10 +133,14 @@ public class LoadBalancerWorker extends Thread {
 	 */
 	private long sopaMagica(BigInteger numberToFactorize) {
 
-		//Ir buscar valores superiores e inferiores � cache de metricas
-		//TODO FAZER!!!!!
+		//y = 2.4643x + 2.7616
 
-		return 270000;
+		double s = Math.sqrt(numberToFactorize.doubleValue());
+		long square = Math.round(s);
+		
+		long y = (long) ((2.4643 * square) + 2.7616);
+		
+		return y;
 	}
 
 	/**
@@ -157,42 +161,41 @@ public class LoadBalancerWorker extends Thread {
 		Instance firstInstanceOfHashMap = (Instance) instanceTimeCost.keySet().toArray()[0];
 		long lowestCost = instanceTimeCost.get(firstInstanceOfHashMap).getCost();
 
-		// Verifica se mais que uma instancia com o custo minimo
-		LinkedHashMap<Instance, TimeCost> instancesSameCost = new LinkedHashMap<>();
-
-		for (Entry<Instance, TimeCost> entry : instanceTimeCost.entrySet()) {
-			if (entry.getValue().getCost() == lowestCost) {
-				instancesSameCost.put(entry.getKey(), entry.getValue());
-				System.out.println("[LOAD BALANCER WORKER] Ha mais que uma instancia com o mesmo custo!");
-			}
-			else
-				break;
-		}
-
-		//desempatar se houver mais que uma instancia pela que tem o pedido � mais tempo
-		if(instancesSameCost.size()>1){
-			System.out.println("[LOAD BALANCER WORKER] Vai desempatar entre instancias!");
-			Date date = new Date();
-			for(Entry<Instance, TimeCost> entry : instancesSameCost.entrySet()){
-				if(entry.getValue().getTime().compareTo(date)<0){
-					System.out.println("[LOAD BALANCER WORKER] A instancia com ip [" + entry.getKey().getPublicIpAddress() + "]"
-							+ " tem uma data menor que a anterior");
-					date = entry.getValue().getTime();
-					instanceToSend = entry.getKey();
-				}
-			}
-		}
-		else {
-			instanceToSend = firstInstanceOfHashMap;
-		}
-		
 		/* Depois de ordenado:
 		 * => Se o (custo atual da instancia + novo custo) < MAX_COST escolhe-se essa instancia
 		 * => Caso contrario, cria-se uma e escolhe-se essa instancia
 		 */
 		if((lowestCost + cost) < MAX_COST ){
+			
+			// Verifica se mais que uma instancia com o custo minimo
+			LinkedHashMap<Instance, TimeCost> instancesSameCost = new LinkedHashMap<>();
 
-			//instanceToSend = firstInstanceOfHashMap;
+			for (Entry<Instance, TimeCost> entry : instanceTimeCost.entrySet()) {
+				if (entry.getValue().getCost() == lowestCost) {
+					instancesSameCost.put(entry.getKey(), entry.getValue());
+					System.out.println("[LOAD BALANCER WORKER] Ha mais que uma instancia com o mesmo custo!");
+				}
+				else
+					break;
+			}
+
+			//desempatar se houver mais que uma instancia pela que tem o pedido � mais tempo
+			if(instancesSameCost.size()>1){
+				System.out.println("[LOAD BALANCER WORKER] Vai desempatar entre instancias!");
+				Date date = new Date();
+				for(Entry<Instance, TimeCost> entry : instancesSameCost.entrySet()){
+					if(entry.getValue().getTime().compareTo(date)<0){
+						System.out.println("[LOAD BALANCER WORKER] A instancia com ip [" + entry.getKey().getPublicIpAddress() + "]"
+								+ " tem uma data menor que a anterior");
+						date = entry.getValue().getTime();
+						instanceToSend = entry.getKey();
+					}
+				}
+			}
+			else {
+				instanceToSend = firstInstanceOfHashMap;
+			}
+
 			System.out.println("[LOAD BALANCER WORKER] Vou enviar para a instacia a correr com menos custo.");
 
 		}
@@ -282,7 +285,6 @@ public class LoadBalancerWorker extends Thread {
 			BigInteger numberToFactorize = getNumberFromURL(httpExchange, response);
 			request.setNumber(numberToFactorize);
 
-
 			long cost = 0;
 
 			try {
@@ -299,7 +301,7 @@ public class LoadBalancerWorker extends Thread {
 				}
 			}
 
-			// Se n�o houver informa��o sobre o numero vai fazer estimativa
+			// Se nao houver informa��o sobre o numero vai fazer estimativa
 			if(cost==0){
 				// Faz a sopa magica
 				cost = sopaMagica(numberToFactorize); //Algoritmo 1

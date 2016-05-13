@@ -18,10 +18,6 @@ public class IntFactorization {
 
 	private ArrayList<BigInteger> factors = new ArrayList<BigInteger>();
 
-
-
-
-
 	public ArrayList<BigInteger> calcPrimeFactors(BigInteger num) {
 
 

@@ -27,7 +27,7 @@ public class Testes {
 		c.setInstanceId("c");
 		Instance d = new Instance();
 		d.setInstanceId("d");
-		
+
 		HashMap<Instance, Date> map = new HashMap<Instance, Date>();
 		Date date = new Date();
 	    map.put(d, date);
@@ -38,7 +38,7 @@ public class Testes {
 	    Thread.sleep(1000 * 30);
 	    map.put(a, date);
 
-	    
+
 	    Object[] objArray = map.entrySet().toArray();
 	    Arrays.sort(objArray, new Comparator() {
 	        public int compare(Object o1, Object o2) {
@@ -109,8 +109,8 @@ public class Testes {
 
 			ec2.setEndpoint("ec2.us-west-2.amazonaws.com");
             cloudWatch.setEndpoint("monitoring.us-west-2.amazonaws.com");
-            
-            
+
+
 			System.out.println("Starting a new instance.");
             RunInstancesRequest runInstancesRequest =
                new RunInstancesRequest();
@@ -126,8 +126,8 @@ public class Testes {
             String newInstanceId = runInstancesResult.getReservation().getInstances()
                                       .get(0).getInstanceId();
             //System.out.println("New instance ID: " + newInstanceId + "with IP ADDRESS : " + runInstancesResult.getReservation().getInstances().get(0).getPublicIpAddress());
-            
-            
+
+
 			DescribeInstancesResult describeInstancesResult = ec2.describeInstances();
 			List<Reservation> reservations = describeInstancesResult.getReservations();
 			Set<Instance> instances = new HashSet<Instance>();
@@ -160,19 +160,23 @@ public class Testes {
 			System.out.println("Error Code: " + ase.getErrorCode());
 			System.out.println("Request ID: " + ase.getRequestId());
 		}
-		*/
+		 */
 		/*
 		System.out.println(System.currentTimeMillis());
 		System.out.println(new Date().getTime());	
-		*/
-		
-		Date a = new Date(1, 2, 3, 4, 5);
-		Date c = new Date(1, 2, 3, 5, 4);
-		Date b = new Date(1, 2, 3, 4, 6);
-		
-		System.out.println(a.compareTo(b)<0);
-		System.out.println(a.compareTo(c)<0);
-		System.out.println(c.compareTo(b)<0);
+		 */
+
+		Date a = new Date(0, 0, 0, 1, 30);
+		Date b = new Date(0, 0, 0, 2, 22);
+		Date c = new Date(0, 0, 0, 3, 20);
+
+
+		int i = b.getMinutes() - a.getMinutes();
+		System.out.println("i " + i);
+
+		//		System.out.println(a.compareTo(b)<0);
+		//		System.out.println(a.compareTo(c)<0);
+		//		System.out.println(c.compareTo(b)<0);
 
 	}
 

@@ -133,7 +133,7 @@ public class AwsTools {
 
 		Set<Instance> workersGroupInstances = new HashSet<Instance>();
 		for(Instance instance: instances){
-			if(instance.getImageId().equals("ami-44a05d24")){
+			if(instance.getImageId().equals("ami-56867a36")){
 				workersGroupInstances.add(instance);
 			}
 		}
@@ -146,7 +146,7 @@ public class AwsTools {
 		RunInstancesRequest runInstancesRequest =
 				new RunInstancesRequest();
 
-		runInstancesRequest.withImageId("ami-44a05d24") 
+		runInstancesRequest.withImageId("ami-56867a36") 
 		.withInstanceType("t2.micro")
 		.withMinCount(1)
 		.withMaxCount(1)

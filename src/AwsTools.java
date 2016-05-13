@@ -200,6 +200,7 @@ public class AwsTools {
 				if(instance.getState().getName().equals("running")){
 						systemInformation.addInstance_cost(instance, 0);
 						systemInformation.addInstance_startTime(instance, instance.getLaunchTime());
+						systemInformation.addZeroRequestsToInstance(instance);
 			}
 		}
 	}

@@ -5,8 +5,10 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.sql.rowset.spi.SyncResolver;
 
@@ -27,6 +29,7 @@ public class SystemInformation {
 		instance_startTime = new LinkedHashMap<>();
 		memcache = new LinkedHashMap<>();
 		requestMemory = new LinkedHashMap<>();
+		instance_numberOfRequests = new LinkedHashMap<>();
 	}
 
 	public void addInstance_cost(Instance instance, long cost){
@@ -49,6 +52,7 @@ public class SystemInformation {
 
 		synchronized(instance_startTime){
 			instance_startTime.put(instance, date);
+
 		}
 	}
 
@@ -75,15 +79,31 @@ public class SystemInformation {
 
 	public void addRequestToInstance(Instance instance){
 		synchronized(instance_numberOfRequests){
-			int oldNumberOfRequests = instance_numberOfRequests.get(instance);
-			instance_numberOfRequests.put(instance, oldNumberOfRequests++);
+			if(instance_numberOfRequests.containsKey(instance)){
+				int oldNumberOfRequests = instance_numberOfRequests.get(instance);
+				int newNumberOfRequests = oldNumberOfRequests + 1;
+				instance_numberOfRequests.put(instance, newNumberOfRequests);
+				System.out.println("[SYSTEM INFORMATION] Request adicionado com sucesso à instancia ["
+				+ instance.getPublicIpAddress() + "], requests ["+instance_numberOfRequests.get(instance)+"]");
+			}
+		}
+	}
+	
+	public void addZeroRequestsToInstance(Instance instance){
+		synchronized(instance_numberOfRequests){
+			instance_numberOfRequests.put(instance, 0);
+			System.out.println("[SYSTEM INFORMATION] Request adicionado com sucesso à instancia ["
+			+ instance.getPublicIpAddress() + "], requests ["+instance_numberOfRequests.get(instance)+"]");
+
 		}
 	}
 
 	public synchronized void deleteRequestToInstance(Instance instance){
 		synchronized(instance_numberOfRequests){
 			int oldNumberOfRequests = instance_numberOfRequests.get(instance);
-			instance_numberOfRequests.put(instance, oldNumberOfRequests--);
+			int newNumberOfRequests = oldNumberOfRequests - 1;
+			instance_numberOfRequests.put(instance, newNumberOfRequests);
+			System.out.println("[SYSTEM INFORMATION] Request removido com sucesso à instancia [" + instance.getPublicIpAddress() + "]");
 		}
 	}
 
@@ -169,6 +189,7 @@ public class SystemInformation {
 		//TODO MELHORAR PARA APAGAR DE TODOS OS ARRAYS
 		synchronized(instance_TimeCost){
 			instance_TimeCost.remove(instance);
+			System.out.println("[SYSTEM INFORMATION] Instancia removida com sucesso");
 		}
 	}
 
@@ -181,6 +202,7 @@ public class SystemInformation {
 
 				long actualCost = notUpdatedCost - cost;
 				instance_TimeCost.put(instance, new TimeCost(new Date(), actualCost));
+				System.out.println("[SYSTEM INFORMATION] Custo removido com sucesso à instancia [" + instance.getPublicIpAddress() + "]");
 			}
 		}
 	}
@@ -204,5 +226,23 @@ public class SystemInformation {
 				instance_numberOfRequests.put(((Map.Entry<Instance, Integer>) e).getKey(), ((Map.Entry<Instance, Integer>) e).getValue());
 			}
 		}
+	}
+
+	public LinkedList<Instance> getInstancesWithZeroRequests(LinkedHashMap<Instance, TimeCost> instancesSameCost){
+
+		LinkedList<Instance> instancias = new LinkedList<>();
+
+		for (Entry<Instance, TimeCost> entry : instancesSameCost.entrySet()) {
+			Instance instance = entry.getKey();
+			System.out.println("[SYSTEM INFORMATION] A instancia ["+entry.getKey().getPublicIpAddress()+"] tem ["
+			+ instance_numberOfRequests.get(instance) + "] atualmente.");
+			if(instance_numberOfRequests.get(instance)==0){
+				instancias.add(instance);
+			}
+		}
+
+		return instancias;
+
+
 	}
 }

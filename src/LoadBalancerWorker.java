@@ -137,9 +137,9 @@ public class LoadBalancerWorker extends Thread {
 
 		double s = Math.sqrt(numberToFactorize.doubleValue());
 		long square = Math.round(s);
-		
+
 		long y = (long) ((2.4643 * square) + 2.7616);
-		
+
 		return y;
 	}
 
@@ -154,7 +154,7 @@ public class LoadBalancerWorker extends Thread {
 	private Instance calculateInstance(long cost) {
 
 		//TODO Só cria nova instancia se a instancia não tiver nenhum podido
-		
+
 		Instance instanceToSend = null;
 
 		systemInformation.sortInstancesByCost();
@@ -163,50 +163,60 @@ public class LoadBalancerWorker extends Thread {
 		Instance firstInstanceOfHashMap = (Instance) instanceTimeCost.keySet().toArray()[0];
 		long lowestCost = instanceTimeCost.get(firstInstanceOfHashMap).getCost();
 
-		/* Depois de ordenado:
-		 * => Se o (custo atual da instancia + novo custo) < MAX_COST escolhe-se essa instancia
-		 * => Caso contrario, cria-se uma e escolhe-se essa instancia
-		 */
-		if((lowestCost + cost) < MAX_COST ){
-			
-			// Verifica se mais que uma instancia com o custo minimo
-			LinkedHashMap<Instance, TimeCost> instancesSameCost = new LinkedHashMap<>();
+		// Verifica se mais que uma instancia com o custo minimo
+		LinkedHashMap<Instance, TimeCost> instancesSameCost = new LinkedHashMap<>();
 
-			for (Entry<Instance, TimeCost> entry : instanceTimeCost.entrySet()) {
-				if (entry.getValue().getCost() == lowestCost) {
-					instancesSameCost.put(entry.getKey(), entry.getValue());
-					System.out.println("[LOAD BALANCER WORKER] Ha mais que uma instancia com o mesmo custo!");
-				}
-				else
-					break;
+		for (Entry<Instance, TimeCost> entry : instanceTimeCost.entrySet()) {
+			if (entry.getValue().getCost() == lowestCost) {
+				instancesSameCost.put(entry.getKey(), entry.getValue());
+				System.out.println("[LOAD BALANCER WORKER] Adicionada uma instancia à lista de instancias com o custo mais baixo");
 			}
+			else
+				break;
+		}
+		//Verificar se esse custo minimo é de não ter nenhum request
+		LinkedList<Instance> instancesWithZeroRequests = systemInformation.getInstancesWithZeroRequests(instancesSameCost);
 
-			//desempatar se houver mais que uma instancia pela que tem o pedido � mais tempo
-			if(instancesSameCost.size()>1){
-				System.out.println("[LOAD BALANCER WORKER] Vai desempatar entre instancias!");
-				Date date = new Date();
-				for(Entry<Instance, TimeCost> entry : instancesSameCost.entrySet()){
-					if(entry.getValue().getTime().compareTo(date)<0){
-						System.out.println("[LOAD BALANCER WORKER] A instancia com ip [" + entry.getKey().getPublicIpAddress() + "]"
-								+ " tem uma data menor que a anterior");
-						date = entry.getValue().getTime();
-						instanceToSend = entry.getKey();
+		// Caso haja instancias sem requests não faz sentido criar uma nova mesmo que ultrapasse o máximo
+		if(instancesWithZeroRequests.size()>0){
+			
+			instanceToSend = instancesWithZeroRequests.getFirst();
+			System.out.println("[LOAD BALANCER WORKER] Há varias instancias sem requests atualmente. Vou enviar para uma delas.");
+			
+		}
+		else {
+			System.out.println("[LOAD BALANCER WORKER] Todas as instancias tem requests atualmente.");
+			if((lowestCost + cost) < MAX_COST ){
+				
+				System.out.println("[LOAD BALANCER WORKER] O custo que as instancias já estão a processar não ultrapassa o máximo.");
+				
+				//desempatar se houver mais que uma instancia pela que tem o pedido � mais tempo
+				if(instancesSameCost.size()>1){
+					System.out.println("[LOAD BALANCER WORKER] Vai desempatar entre instancias!");
+					Date date = new Date();
+					for(Entry<Instance, TimeCost> entry : instancesSameCost.entrySet()){
+						if(entry.getValue().getTime().compareTo(date)<0){
+							System.out.println("[LOAD BALANCER WORKER] A instancia com ip [" + entry.getKey().getPublicIpAddress() + "]"
+									+ " tem uma data menor que a anterior");
+							date = entry.getValue().getTime();
+							instanceToSend = entry.getKey();
+						}
 					}
 				}
+				else {
+					instanceToSend = firstInstanceOfHashMap;
+				}
+
+				System.out.println("[LOAD BALANCER WORKER] Vou enviar para a instacia a correr com menos custo.");
+
 			}
-			else {
-				instanceToSend = firstInstanceOfHashMap;
+			else{
+
+				System.out.println("[LOAD BALANCER WORKER] Vou enviar para uma nova instancia que acabei de criar.");
+
+				return instanceToSend = awsTools.createWorkersGroupInstance();
+
 			}
-
-			System.out.println("[LOAD BALANCER WORKER] Vou enviar para a instacia a correr com menos custo.");
-
-		}
-		else{
-
-			System.out.println("[LOAD BALANCER WORKER] Vou enviar para uma nova instancia que acabei de criar.");
-
-			return instanceToSend = awsTools.createWorkersGroupInstance();
-
 		}
 
 		return instanceToSend;
@@ -235,7 +245,7 @@ public class LoadBalancerWorker extends Thread {
 			HttpURLConnection con = (HttpURLConnection) obj.openConnection();// Envia o pedido
 			systemInformation.addInstance_cost(instance, cost2);
 			systemInformation.addRequestToInstance(instance);
-			
+
 			System.out.println("[LOAD BALANCER WORKER] ENVIEI O PEDIDO PARA FATORIZAR PARA O URL: [" + url + "]");
 			// optional default is GET
 			con.setRequestMethod("GET");

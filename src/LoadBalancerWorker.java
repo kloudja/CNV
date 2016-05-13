@@ -36,7 +36,7 @@ import com.sun.net.httpserver.HttpExchange;
 public class LoadBalancerWorker extends Thread {
 
 	private HttpExchange httpExchange;
-	long MAX_COST = 500000;
+	long MAX_COST = 35000000;
 	AwsTools awsTools;
 
 	private SystemInformation systemInformation;
